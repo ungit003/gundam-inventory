@@ -1,15 +1,15 @@
 <!-- src/components/GundamForm.vue -->
 
 <script setup>
-// 1. 폼 입력을 임시로 저장할 반응형 데이터를 만들기 위해 'ref'를 가져옵니다.
+// 폼 입력을 임시로 저장할 반응형 데이터를 만들기 위해 'ref'를 가져옵니다.
 import { ref } from 'vue';
+// 1. emit을 정의하는 코드는 더 이상 필요 없으므로 삭제합니다.
+//    대신, 우리가 만든 스토어를 가져옵니다.
+import { useInventoryStore } from '../stores/inventory';
 
-// 2. 이 컴포넌트가 부모에게 'add-gundam'이라는 이름의 이벤트를 보낼 것이라고 선언합니다.
-// 이렇게 미리 선언해두면 코드가 명확해지고, Vue 개발자 도구에서도 확인하기 좋습니다.
-const emit = defineEmits(['add-gundam']);
+// 2. 스토어 인스턴스를 가져옵니다.
+const store = useInventoryStore();
 
-// 3. 폼의 각 입력 필드와 연결될 객체를 생성합니다.
-// 사용자가 폼에 무언가 입력하면 이 객체의 속성값이 실시간으로 바뀝니다.
 const newGundam = ref({
   grade: '',
   name: '',
@@ -17,19 +17,17 @@ const newGundam = ref({
   status: '보관'
 });
 
-// 4. 폼이 제출될 때 실행될 함수입니다.
 const handleSubmit = () => {
-  // 간단한 유효성 검사: 건담 이름이 비어있으면 경고하고 함수를 종료합니다.
   if (!newGundam.value.name.trim()) {
     alert('건담 이름을 입력해주세요.');
     return;
   }
+  
+  // 3. emit으로 이벤트를 보내는 대신, 스토어의 addGundam 액션을 직접 호출합니다.
+  //    사용자가 입력한 데이터를 인자로 넘겨줍니다.
+  store.addGundam(newGundam.value);
 
-  // 5. 'add-gundam' 이벤트를 발생시키면서, 사용자가 입력한 데이터(newGundam.value)를 함께 보냅니다.
-  // 객체를 복사해서 보내는 것이 안전합니다. ({ ...newGundam.value })
-  emit('add-gundam', { ...newGundam.value });
-
-  // 6. 데이터를 부모에게 보낸 후, 다음 입력을 위해 폼을 깨끗하게 초기화합니다.
+  // 폼 초기화 로직은 동일합니다.
   newGundam.value = { grade: '', name: '', quantity: 1, status: '보관' };
 };
 </script>

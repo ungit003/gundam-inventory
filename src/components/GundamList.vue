@@ -2,21 +2,25 @@
 
 <script setup>
 // 이 영역에는 나중에 컴포넌트의 동작 로직(JavaScript)을 작성합니다.
-// 1. 'defineProps'를 사용해 부모 컴포넌트로부터 어떤 데이터를 받을지 정의합니다.
-// 이 컴포넌트는 'gundams'라는 이름의 prop을 받는다고 선언하는 것입니다.
-// 타입 체크(type)나 필수 여부(required)를 설정하면 코드의 안정성을 높일 수 있습니다.
-defineProps({
-  gundams: {
-    type: Array, // 데이터의 타입은 배열(Array)이어야 합니다.
-    required: true, // 이 데이터는 필수적으로 받아야 합니다.
-  }
-});
+// 1. Pinia에서 storeToRefs 함수와, 우리가 만든 스토어를 가져옵니다.
+import { storeToRefs } from 'pinia';
+import { useInventoryStore } from '../stores/inventory';
+
+// 2. useInventoryStore 함수를 실행하여 스토어 인스턴스를 가져옵니다.
+const store = useInventoryStore();
+
+// 3. storeToRefs를 사용하면 스토어의 state와 getters를 반응성을 유지한 채로 가져올 수 있습니다.
+//    이렇게 구조 분해 할당을 하면 template에서 'gundams.value' 대신 'gundams'로 바로 사용할 수 있어 편리합니다.
+const { gundams, totalCount } = storeToRefs(store);
+
+// props를 받는 코드는 더 이상 필요 없으므로 삭제합니다. (defineProps)
 </script>
 
 <template>
   <!-- 이 영역에는 컴포넌트의 화면 구조(HTML)를 작성합니다. -->
   <div class="gundam-list-container">
-    <h2>재고 목록</h2>
+    <!-- getters로 만든 totalCount를 사용합니다. -->
+    <h2>재고 목록 (총 {{ totalCount }}개)</h2>
     <table>
       <thead>
         <tr>
@@ -29,18 +33,19 @@ defineProps({
       </thead>
       <tbody>
         <!-- 
-          2. 'v-for' 디렉티브를 사용하여 'gundams' 배열을 순회하며 <tr> 요소를 생성합니다.
-          'gundam'은 배열의 각 요소를 순서대로 가리키는 임시 변수입니다.
-          ':key'는 Vue가 각 항목을 효율적으로 식별하고 업데이트하기 위해 필요한 고유한 값입니다.
-          'v-for'를 사용할 때는 항상 고유한 id를 :key에 바인딩하는 것이 좋습니다.
+          props.gundams가 아닌, 스토어에서 직접 가져온 gundams를 사용합니다.
+          동작 방식은 동일합니다.
         -->
         <tr v-for="gundam in gundams" :key="gundam.id">
-          <!-- 3. {{ }} (콧수염 괄호, Mustache syntax)를 사용해 각 건담의 데이터를 화면에 표시합니다. -->
           <td>{{ gundam.grade }}</td>
           <td>{{ gundam.name }}</td>
           <td>{{ gundam.quantity }}</td>
           <td>{{ gundam.status }}</td>
-          <td><button>삭제</button></td>
+          <!-- 
+            4. 삭제 버튼 클릭 시, 스토어의 deleteGundam 액션을 직접 호출합니다.
+               이때 삭제할 건담의 id를 인자로 넘겨줍니다.
+          -->
+          <td><button @click="store.deleteGundam(gundam.id)">삭제</button></td>
         </tr>
       </tbody>
     </table>

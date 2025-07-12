@@ -1,38 +1,9 @@
 <!-- src/App.vue -->
 
 <script setup>
-// import 키워드를 사용하여 다른 파일에 있는 컴포넌트를 가져옵니다.
-// 이렇게 가져온 컴포넌트는 <template> 안에서 HTML 태그처럼 사용할 수 있습니다.
+// 데이터(ref)와 이벤트 핸들러가 모두 필요 없어졌으므로 삭제합니다.
 import GundamList from './components/GundamList.vue';
 import GundamForm from './components/GundamForm.vue';
-
-// 1. Vue의 핵심 기능인 반응성을 만들어주는 'ref' 함수를 가져옵니다.
-// 'ref'로 감싼 데이터는 값이 변경되면, 이 데이터를 사용하는 모든 화면이 자동으로 업데이트됩니다.
-import { ref } from 'vue';
-
-// 2. 화면에 표시할 건담 목록 데이터를 'ref'를 사용해 반응형 데이터로 생성합니다.
-// 각 건담은 고유한 'id'를 가지도록 만드는 것이 좋습니다. 
-// 나중에 삭제/수정 기능을 만들 때 이 id를 기준으로 특정 항목을 찾아냅니다.
-const gundams = ref([
-  { id: 1, grade: 'MG', name: '스트라이크 프리덤', quantity: 1, status: '보관' },
-  { id: 2, grade: 'HG', name: '에어리얼', quantity: 2, status: '판매' },
-  { id: 3, grade: 'RG', name: '사자비', quantity: 1, status: '보관' },
-]);
-
-// 1. 자식 컴포넌트(GundamForm)가 보낸 이벤트를 처리할 함수를 정의합니다.
-//    이벤트와 함께 전달된 데이터는 함수의 매개변수(newGundamData)로 받게 됩니다.
-const handleAddGundam = (newGundamData) => {
-  // 2. 전달받은 새 건담 데이터에 고유한 id를 추가합니다.
-  //    Date.now()는 현재 시간을 밀리초로 반환하므로, 간단한 고유 ID로 사용하기 좋습니다.
-  const newGundamWithId = {
-    ...newGundamData,
-    id: Date.now()
-  };
-
-  // 3. 기존 건담 목록 배열(gundams.value)에 새로운 건담을 추가합니다.
-  //    'gundams'가 'ref'로 만든 반응형 데이터이므로, 배열에 push하는 순간 화면이 자동으로 업데이트됩니다.
-  gundams.value.push(newGundamWithId);
-};
 </script>
 
 <template>
@@ -44,22 +15,12 @@ const handleAddGundam = (newGundamData) => {
     <h1>내 건담 재고 관리</h1>
   </header>
   <main>
-    <!-- 등록 폼 컴포넌트가 이 자리에 렌더링됩니다. -->
+    <GundamForm />
     <!-- 
-      4. 자식 컴포넌트에 이벤트 리스너를 추가합니다.
-      - '@add-gundam': GundamForm 컴포넌트가 'add-gundam' 이벤트를 발생시키면
-      - 'handleAddGundam': 우리가 위에서 만든 handleAddGundam 함수를 실행하라는 의미입니다.
+      자식에게 데이터를 전달하고 이벤트를 받을 필요가 없어졌습니다.
+      :gundams, @add-gundam 코드를 모두 제거합니다.
     -->
-    <GundamForm @add-gundam="handleAddGundam" />
-
-    <!-- 재고 목록 컴포넌트가 이 자리에 렌더링됩니다. -->
-    <!-- 
-      3. 자식 컴포넌트(<GundamList>)에 데이터를 전달합니다.
-      ':gundams'는 'v-bind:gundams'의 축약형입니다.
-      'gundams'라는 이름표(prop)로 우리가 위에서 만든 'gundams' 데이터를
-      자식에게 넘겨준다는 의미입니다. (왼쪽 gundams = 이름표, 오른쪽 gundams = 실제 데이터)
-    -->
-    <GundamList :gundams="gundams" />
+    <GundamList />
   </main>
 </template>
 
