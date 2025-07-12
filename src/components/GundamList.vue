@@ -2,7 +2,15 @@
 
 <script setup>
 // 이 영역에는 나중에 컴포넌트의 동작 로직(JavaScript)을 작성합니다.
-// 지금은 비워둡니다.
+// 1. 'defineProps'를 사용해 부모 컴포넌트로부터 어떤 데이터를 받을지 정의합니다.
+// 이 컴포넌트는 'gundams'라는 이름의 prop을 받는다고 선언하는 것입니다.
+// 타입 체크(type)나 필수 여부(required)를 설정하면 코드의 안정성을 높일 수 있습니다.
+defineProps({
+  gundams: {
+    type: Array, // 데이터의 타입은 배열(Array)이어야 합니다.
+    required: true, // 이 데이터는 필수적으로 받아야 합니다.
+  }
+});
 </script>
 
 <template>
@@ -21,21 +29,17 @@
       </thead>
       <tbody>
         <!-- 
-          나중에는 이 부분이 v-for를 통해 동적으로 생성됩니다.
-          지금은 화면이 어떻게 보일지 확인하기 위해 임시 데이터를 넣어둡니다.
+          2. 'v-for' 디렉티브를 사용하여 'gundams' 배열을 순회하며 <tr> 요소를 생성합니다.
+          'gundam'은 배열의 각 요소를 순서대로 가리키는 임시 변수입니다.
+          ':key'는 Vue가 각 항목을 효율적으로 식별하고 업데이트하기 위해 필요한 고유한 값입니다.
+          'v-for'를 사용할 때는 항상 고유한 id를 :key에 바인딩하는 것이 좋습니다.
         -->
-        <tr>
-          <td>MG</td>
-          <td>스트라이크 프리덤</td>
-          <td>1</td>
-          <td>보관</td>
-          <td><button>삭제</button></td>
-        </tr>
-        <tr>
-          <td>HG</td>
-          <td>에어리얼</td>
-          <td>2</td>
-          <td>판매</td>
+        <tr v-for="gundam in gundams" :key="gundam.id">
+          <!-- 3. {{ }} (콧수염 괄호, Mustache syntax)를 사용해 각 건담의 데이터를 화면에 표시합니다. -->
+          <td>{{ gundam.grade }}</td>
+          <td>{{ gundam.name }}</td>
+          <td>{{ gundam.quantity }}</td>
+          <td>{{ gundam.status }}</td>
           <td><button>삭제</button></td>
         </tr>
       </tbody>
