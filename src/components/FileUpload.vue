@@ -30,13 +30,25 @@ const handleFileUpload = async (event) => {
       - accept 속성으로 엑셀 파일만 선택할 수 있도록 제한합니다.
       - @change 이벤트는 사용자가 파일을 선택했을 때 발생합니다.
     -->
-    <label for="file-upload">파일 불러오기:</label>
-    <input 
-      id="file-upload"
-      type="file" 
-      @change="handleFileUpload" 
-      accept=".xlsx, .xls"
-    >
+    <div>
+      <label for="file-upload">파일 불러오기:</label>
+      <input 
+        id="file-upload"
+        type="file" 
+        @change="handleFileUpload" 
+        accept=".xlsx, .xls"
+      >
+    </div>
+    
+    <!-- 
+      아래 버튼을 새로 추가합니다.
+      클릭(@click)하면 store에 있는 createExcel 함수를 실행합니다.
+    -->
+    <div class="button-group">
+      <button @click="store.createExcel" class="create-button">
+        현재 목록으로 엑셀 생성
+      </button>
+    </div>
   </div>
 </template>
 
@@ -46,5 +58,26 @@ const handleFileUpload = async (event) => {
   padding: 1rem;
   border: 1px solid #eee;
   border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.create-button {
+  background-color: #4CAF50; /* 초록색 배경 */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 </style>
