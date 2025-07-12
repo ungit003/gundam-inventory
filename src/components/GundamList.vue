@@ -86,7 +86,7 @@ const store = useInventoryStore();
             <!-- 이 목록의 종류(listType)가 'sale'일 때만 이 div와 안의 버튼들이 화면에 나타납니다. -->
             <div v-else-if="listType === 'sale'" class="button-group">
               <button @click="store.moveToStorage(item.id)" class="action-button move">보관 목록으로</button>
-              <button @click="store.markAsSold(item.id)" class="action-button complete">판매 완료</button>
+              <button @click="store.openSaleModal(item.id)" class="action-button complete">판매 완료</button>
             </div>
           </td>
         </tr>

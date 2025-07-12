@@ -14,11 +14,15 @@ import FileUpload from './components/FileUpload.vue';
 import FilterControls from './components/FilterControls.vue';
 import HobbyFund from './components/HobbyFund.vue';
 
+import SaleConfirmModal from './components/SaleConfirmModal.vue';
+
 // 2. Pinia 스토어를 사용 준비합니다.
 const store = useInventoryStore();
 
 // 3. storeToRefs를 사용하여 스토어의 state를 반응성을 유지한 채로 가져옵니다.
 const { 
+  isSaleModalVisible,
+  itemToSell,
   filteredInStorageList, 
   filteredForSaleList, 
   filteredSoldList 
@@ -62,6 +66,13 @@ const {
       listType="sold" 
     />
   </main>
+
+  <!-- 
+    3. [신규] 모달 컴포넌트를 앱의 최상단에 배치합니다.
+    - v-if를 사용해 isSaleModalVisible이 true일 때만 모달이 화면에 나타나도록 합니다.
+    - :item="itemToSell"을 통해 모달이 어떤 아이템 정보를 표시해야 할지 데이터를 전달합니다.
+  -->
+  <SaleConfirmModal v-if="isSaleModalVisible && itemToSell" :item="itemToSell" />
 </template>
 
 <style scoped>

@@ -35,9 +35,14 @@ export const useInventoryStore = defineStore('inventory', {
     // 검색어나 필터 같은 UI 상태도 여기에 함께 관리합니다.
     searchTerm: '',
 
-    // 1. [신규] 현재 선택된 등급 필터를 저장할 state를 추가합니다.
+    // 현재 선택된 등급 필터를 저장할 state를 추가합니다.
     //    'All'을 기본값으로 설정하여 처음에는 모든 목록이 보이도록 합니다.
     gradeFilter: 'All', 
+
+    // 모달의 열림/닫힘 상태를 관리하는 boolean 값
+    isSaleModalVisible: false,
+    // 모달에서 처리할 아이템의 ID를 임시 저장하는 값
+    itemIdToProcess: null,
   }),
 
   // ----------------------------------------------------------------
@@ -83,7 +88,7 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     /**
-     * [신규] '취미 자금'을 계산하는 getter입니다.
+     * '취미 자금'을 계산하는 getter입니다.
      * 보관 목록과 판매 목록에 있는 모든 아이템의 구매 가격을 합산합니다.
      * @param {object} state - 현재 스토어의 state
      * @returns {number} - 계산된 총 구매 가격
@@ -99,6 +104,14 @@ export const useInventoryStore = defineStore('inventory', {
       const total = allStock.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
       
       return total;
+    },
+
+    // 모달에 전달할 아이템 객체를 찾아주는 getter
+    itemToSell: (state) => {
+      // itemIdToProcess가 null이면 아무것도 반환하지 않음
+      if (!state.itemIdToProcess) return null;
+      // 판매 목록에서 해당 ID를 가진 아이템을 찾아 반환
+      return state.forSaleList.find(item => item.id === state.itemIdToProcess);
     },
   },
 
@@ -157,7 +170,7 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     /**
-     * [신규 액션 1] 보관 목록 -> 판매 목록으로 이동
+     * 보관 목록 -> 판매 목록으로 이동
      * @param {number} gundamId - 이동시킬 건담의 ID
      */
     moveToSale(gundamId) {
@@ -174,7 +187,7 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     /**
-     * [신규 액션 2] 판매 목록 -> 보관 목록으로 이동
+     * 판매 목록 -> 보관 목록으로 이동
      * @param {number} gundamId - 이동시킬 건담의 ID
      */
     moveToStorage(gundamId) {
@@ -186,25 +199,37 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     /**
-     * [신규 액션 3] 판매 목록 -> 판매 완료 목록으로 이동
+     * 판매 목록 -> 판매 완료 목록으로 이동
      * @param {number} gundamId - 판매 완료 처리할 건담의 ID
      */
-    markAsSold(gundamId) {
-      // (참고) 7단계에서는 이 액션이 판매 가격 등을 입력받는 모달과 연동되도록 확장됩니다.
-      // 지금은 단순 이동 기능만 구현합니다.
+    markAsSold(gundamId, saleDetails) {
       const index = this.forSaleList.findIndex(g => g.id === gundamId);
       if (index !== -1) {
         const [itemToMove] = this.forSaleList.splice(index, 1);
         
-        // '판매 완료 목록'에 맞는 데이터 구조로 변환합니다.
+        // 전달받은 판매 정보(saleDetails)를 아이템 객체에 합칩니다.
         const soldItem = {
           ...itemToMove,
-          salePrice: itemToMove.salePrice || null, // 기존에 값이 없었으므로 null로 설정
-          saleMedium: itemToMove.saleMedium || '미지정', // '미지정'으로 초기값 설정
+          salePrice: saleDetails.salePrice,
+          saleMedium: saleDetails.saleMedium,
         };
         
         this.soldList.push(soldItem);
+        // 작업이 완료되면 모달을 닫습니다.
+        this.closeSaleModal();
       }
+    },
+
+    // 4. [신규] 모달을 열기 위한 액션
+    openSaleModal(gundamId) {
+      this.itemIdToProcess = gundamId; // 처리할 아이템 ID 저장
+      this.isSaleModalVisible = true;  // 모달을 보이게 설정
+    },
+    
+    // 5. [신규] 모달을 닫기 위한 액션
+    closeSaleModal() {
+      this.isSaleModalVisible = false; // 모달을 숨김
+      this.itemIdToProcess = null;     // 처리할 아이템 ID 초기화
     },
     // ----------------------------------------------------------------
     // TODO: 아래 액션들은 8단계(다중 시트 엑셀)에서 다시 구현할 예정입니다.
