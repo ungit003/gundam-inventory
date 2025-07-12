@@ -43,6 +43,9 @@ export const useInventoryStore = defineStore('inventory', {
     isSaleModalVisible: false,
     // 모달에서 처리할 아이템의 ID를 임시 저장하는 값
     itemIdToProcess: null,
+
+    // 초기값은 null로, 아직 아무 파일도 불러오지 않았음을 의미합니다.
+    loadedFileName: null,
   }),
 
   // ----------------------------------------------------------------
@@ -271,34 +274,46 @@ export const useInventoryStore = defineStore('inventory', {
         const data = await file.arrayBuffer();
         const workbook = XLSX.read(data);
 
-        // 1. 불러오기 전에 기존의 모든 목록을 깨끗하게 비웁니다.
-        this.inStorageList = [];
-        this.forSaleList = [];
-        this.soldList = [];
+        this.inStorageList = XLSX.utils.sheet_to_json(workbook.Sheets['보관목록'] || []);
+        this.forSaleList = XLSX.utils.sheet_to_json(workbook.Sheets['판매목록'] || []);
+        this.soldList = XLSX.utils.sheet_to_json(workbook.Sheets['판매완료'] || []);
         
-        // 2. 각 시트 이름에 해당하는 데이터를 읽어와 해당 state에 할당합니다.
-        //    시트가 존재하지 않을 경우를 대비해 || [] 연산자로 안전하게 처리합니다.
-        const wsStorage = workbook.Sheets['보관목록'];
-        if (wsStorage) {
-          this.inStorageList = XLSX.utils.sheet_to_json(wsStorage);
-        }
+        // --- 핵심 수정 부분 ---
+        // 성공적으로 파일을 불러왔을 때, 파일의 이름을 state에 저장합니다.
+        this.loadedFileName = file.name;
+        // --------------------
 
-        const wsSale = workbook.Sheets['판매목록'];
-        if (wsSale) {
-          this.forSaleList = XLSX.utils.sheet_to_json(wsSale);
-        }
-
-        const wsSold = workbook.Sheets['판매완료'];
-        if (wsSold) {
-          this.soldList = XLSX.utils.sheet_to_json(wsSold);
-        }
-
-        alert('엑셀 파일을 성공적으로 불러왔습니다.');
+        alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.`);
 
       } catch (error) {
         console.error('파일을 읽는 중 오류가 발생했습니다:', error);
         alert('파일을 읽는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.');
       }
     },
+
+    // 3. [신규] '현재 파일에 저장' 기능을 위한 새로운 액션을 추가합니다.
+    saveCurrentFile() {
+      // 3-1. 먼저, 저장할 파일 이름(loadedFileName)이 있는지 확인합니다.
+      if (!this.loadedFileName) {
+        alert('저장할 파일이 지정되지 않았습니다. 먼저 "파일 불러오기"를 통해 작업할 파일을 선택해주세요.');
+        return; // 파일 이름이 없으면 함수를 중단합니다.
+      }
+
+      // 3-2. 엑셀 파일을 생성하는 로직은 createExcel과 동일합니다.
+      const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
+      const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
+      const wsSold = XLSX.utils.json_to_sheet(this.soldList);
+      
+      const workbook = XLSX.utils.book_new();
+      
+      XLSX.utils.book_append_sheet(workbook, wsStorage, '보관목록');
+      XLSX.utils.book_append_sheet(workbook, wsSale, '판매목록');
+      XLSX.utils.book_append_sheet(workbook, wsSold, '판매완료');
+      
+      // 3-3. 파일을 다운로드 시킬 때, 저장해 두었던 this.loadedFileName을 사용합니다.
+      XLSX.writeFile(workbook, this.loadedFileName);
+      alert(`'${this.loadedFileName}' 파일에 현재 목록을 저장했습니다.`);
+    },
+
   },
 });

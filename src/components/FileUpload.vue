@@ -35,7 +35,12 @@ const handleFileUpload = async (event) => {
         이 액션은 이제 다중 시트를 가진 엑셀 파일을 생성합니다.
       -->
       <button @click="store.createExcel" class="create-button">
-        현재 목록으로 엑셀 생성
+        새 엑셀 파일로 생성
+      </button>
+
+      <!-- '현재 파일에 저장' 버튼을 추가하고, saveCurrentFile 액션과 연결합니다. -->
+      <button @click="store.saveCurrentFile" class="save-button">
+        현재 파일에 저장
       </button>
     </div>
   </div>
@@ -51,17 +56,18 @@ const handleFileUpload = async (event) => {
   background-color: #f8f9fa;
   border-radius: 8px;
 }
-.button-group, .file-input-group {
+.button-group {
   display: flex;
-  align-items: center;
   gap: 0.5rem;
 }
-.create-button {
-  background-color: #4CAF50;
-  color: white;
+.create-button, .save-button {
   border: none;
   padding: 10px 15px;
   cursor: pointer;
   border-radius: 4px;
+  color: white;
+  font-weight: 500;
 }
+.create-button { background-color: #4CAF50; } /* 새 파일 생성: 초록색 */
+.save-button { background-color: #2196F3; }  /* 현재 파일 저장: 파란색 */
 </style>
