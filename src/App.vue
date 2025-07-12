@@ -11,12 +11,17 @@ import GundamList from './components/GundamList.vue';
 import GundamForm from './components/GundamForm.vue';
 import FileUpload from './components/FileUpload.vue';
 
+import FilterControls from './components/FilterControls.vue';
+
 // 2. Pinia 스토어를 사용 준비합니다.
 const store = useInventoryStore();
 
 // 3. storeToRefs를 사용하여 스토어의 state를 반응성을 유지한 채로 가져옵니다.
-//    1단계에서 정의한 세 개의 목록(state)을 구조 분해 할당으로 편리하게 가져옵니다.
-const { inStorageList, forSaleList, soldList } = storeToRefs(store);
+const { 
+  filteredInStorageList, 
+  filteredForSaleList, 
+  filteredSoldList 
+} = storeToRefs(store);
 </script>
 
 <template>
@@ -30,24 +35,28 @@ const { inStorageList, forSaleList, soldList } = storeToRefs(store);
 
     <hr class="divider">
 
+    <!-- 3. 목록들이 시작되기 전에 필터 컨트롤 컴포넌트를 배치합니다. -->
+    <FilterControls />
+
     <!-- 
       4. GundamList 컴포넌트를 재사용하여 세 개의 목록을 각각 렌더링합니다.
          - :title="판매 목록" 처럼 props를 통해 각 컴포넌트에 다른 데이터를 전달합니다[5].
          - 하나의 컴포넌트가 props 값에 따라 각기 다른 제목, 데이터, 구조를 가지게 됩니다.
     -->
+    <!-- 4. GundamList 컴포넌트에 props로 전달하는 :items를 필터링된 getter로 교체합니다. -->
     <GundamList 
       title="판매 목록" 
-      :items="forSaleList" 
+      :items="filteredForSaleList" 
       listType="sale" 
     />
     <GundamList 
       title="보관 목록" 
-      :items="inStorageList" 
+      :items="filteredInStorageList" 
       listType="storage" 
     />
     <GundamList 
       title="판매 완료 목록" 
-      :items="soldList" 
+      :items="filteredSoldList" 
       listType="sold" 
     />
   </main>

@@ -34,6 +34,10 @@ export const useInventoryStore = defineStore('inventory', {
 
     // 검색어나 필터 같은 UI 상태도 여기에 함께 관리합니다.
     searchTerm: '',
+
+    // 1. [신규] 현재 선택된 등급 필터를 저장할 state를 추가합니다.
+    //    'All'을 기본값으로 설정하여 처음에는 모든 목록이 보이도록 합니다.
+    gradeFilter: 'All', 
   }),
 
   // ----------------------------------------------------------------
@@ -44,11 +48,39 @@ export const useInventoryStore = defineStore('inventory', {
     // 이제 총 재고 수량은 '보관'과 '판매' 목록의 합계가 됩니다.
     totalInStockCount: (state) => state.inStorageList.length + state.forSaleList.length,
 
-    // 필터링 기능은 2단계에서 각 목록 컴포넌트로 이전하거나 더 복잡한 getter로 만들 예정입니다.
-    // 우선은 각 목록을 그대로 반환하는 간단한 형태로 둡니다.
-    getInStorageList: (state) => state.inStorageList,
-    getForSaleList: (state) => state.forSaleList,
-    getSoldList: (state) => state.soldList,
+    /**
+     * 필터링된 보관 목록을 반환하는 getter입니다.
+     * 이 getter는 gradeFilter나 searchTerm이 바뀔 때마다 자동으로 다시 계산됩니다.
+     * @param {object} state - 현재 스토어의 state
+     * @returns {GundamItem[]} - 필터링된 보관 목록
+     */
+    filteredInStorageList: (state) => {
+      return state.inStorageList.filter(item => {
+        // 등급 필터 조건: 필터가 'All'이거나, 아이템의 등급과 필터가 일치하는 경우
+        const gradeMatch = state.gradeFilter === 'All' || item.grade === state.gradeFilter;
+        // 검색어 필터 조건 (기존 로직)
+        const searchMatch = item.name.toLowerCase().includes(state.searchTerm.toLowerCase());
+        // 두 조건 모두 만족해야 true를 반환
+        return gradeMatch && searchMatch;
+      });
+    },
+
+    // 판매 목록과 판매 완료 목록도 동일한 로직으로 필터링 getter를 만듭니다.
+    filteredForSaleList: (state) => {
+      return state.forSaleList.filter(item => {
+        const gradeMatch = state.gradeFilter === 'All' || item.grade === state.gradeFilter;
+        const searchMatch = item.name.toLowerCase().includes(state.searchTerm.toLowerCase());
+        return gradeMatch && searchMatch;
+      });
+    },
+
+    filteredSoldList: (state) => {
+      return state.soldList.filter(item => {
+        const gradeMatch = state.gradeFilter === 'All' || item.grade === state.gradeFilter;
+        const searchMatch = item.name.toLowerCase().includes(state.searchTerm.toLowerCase());
+        return gradeMatch && searchMatch;
+      });
+    },
   },
 
   // ----------------------------------------------------------------
@@ -56,6 +88,14 @@ export const useInventoryStore = defineStore('inventory', {
   //    가장 많은 변경이 필요한 부분입니다. 기존 로직을 새로운 구조에 맞게 수정합니다.
   // ----------------------------------------------------------------
   actions: {
+    /**
+     * 등급 필터 상태를 업데이트하는 액션입니다.
+     * @param {string} grade - 사용자가 선택한 등급 ('All', 'HG' 등)
+     */
+    setGradeFilter(grade) {
+      this.gradeFilter = grade;
+    },
+    
     /**
      * 신규 건담을 등록하는 액션입니다.
      * 이제 새로운 건담은 기본적으로 '보관 목록(inStorageList)'에 추가됩니다.
