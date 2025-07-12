@@ -4,6 +4,8 @@
 // 데이터(ref)와 이벤트 핸들러가 모두 필요 없어졌으므로 삭제합니다.
 import GundamList from './components/GundamList.vue';
 import GundamForm from './components/GundamForm.vue';
+// 1. FileUpload 컴포넌트를 가져옵니다.
+import FileUpload from './components/FileUpload.vue';
 </script>
 
 <template>
@@ -15,6 +17,8 @@ import GundamForm from './components/GundamForm.vue';
     <h1>내 건담 재고 관리</h1>
   </header>
   <main>
+    <!-- 2. 적절한 위치에 컴포넌트를 배치합니다. -->
+    <FileUpload />
     <GundamForm />
     <!-- 
       자식에게 데이터를 전달하고 이벤트를 받을 필요가 없어졌습니다.

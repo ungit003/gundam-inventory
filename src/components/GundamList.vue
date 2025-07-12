@@ -9,11 +9,9 @@ import { useInventoryStore } from '../stores/inventory';
 // 2. useInventoryStore 함수를 실행하여 스토어 인스턴스를 가져옵니다.
 const store = useInventoryStore();
 
-// 3. storeToRefs를 사용하면 스토어의 state와 getters를 반응성을 유지한 채로 가져올 수 있습니다.
-//    이렇게 구조 분해 할당을 하면 template에서 'gundams.value' 대신 'gundams'로 바로 사용할 수 있어 편리합니다.
-const { gundams, totalCount } = storeToRefs(store);
-
-// props를 받는 코드는 더 이상 필요 없으므로 삭제합니다. (defineProps)
+// 1. store.gundams 대신, 필터링된 getter인 'filteredGundams'를 가져옵니다.
+//    store.searchTerm도 가져와서 v-model에 연결합니다.
+const { filteredGundams, totalCount } = storeToRefs(store);
 </script>
 
 <template>
@@ -21,6 +19,17 @@ const { gundams, totalCount } = storeToRefs(store);
   <div class="gundam-list-container">
     <!-- getters로 만든 totalCount를 사용합니다. -->
     <h2>재고 목록 (총 {{ totalCount }}개)</h2>
+
+    <!-- 2. 검색 입력창을 추가합니다. -->
+    <!-- v-model="store.searchTerm"을 통해 입력창과 스토어의 searchTerm state를 직접 연결합니다. -->
+    <!-- 사용자가 타이핑할 때마다 store.searchTerm이 실시간으로 바뀌고, filteredGundams가 자동으로 다시 계산됩니다. -->
+    <input 
+      type="text" 
+      v-model="store.searchTerm" 
+      placeholder="건담 이름으로 검색..."
+      class="search-input"
+    >
+    
     <table>
       <thead>
         <tr>
@@ -36,7 +45,8 @@ const { gundams, totalCount } = storeToRefs(store);
           props.gundams가 아닌, 스토어에서 직접 가져온 gundams를 사용합니다.
           동작 방식은 동일합니다.
         -->
-        <tr v-for="gundam in gundams" :key="gundam.id">
+        <!-- 3. v-for의 대상을 'filteredGundams'로 변경합니다. -->
+        <tr v-for="gundam in filteredGundams" :key="gundam.id">
           <td>{{ gundam.grade }}</td>
           <td>{{ gundam.name }}</td>
           <td>{{ gundam.quantity }}</td>
@@ -71,5 +81,11 @@ th, td {
   border: 1px solid #ccc;
   padding: 0.5rem;
   text-align: left;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
 }
 </style>
