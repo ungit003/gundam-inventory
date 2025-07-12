@@ -12,6 +12,7 @@ import GundamForm from './components/GundamForm.vue';
 import FileUpload from './components/FileUpload.vue';
 
 import FilterControls from './components/FilterControls.vue';
+import HobbyFund from './components/HobbyFund.vue';
 
 // 2. Pinia 스토어를 사용 준비합니다.
 const store = useInventoryStore();
@@ -30,6 +31,7 @@ const {
   </header>
   <main>
     <!-- 이 컴포넌트들은 다음 단계들에서 순차적으로 기능을 구현하고 수정할 예정입니다. -->
+    <HobbyFund />
     <FileUpload /> 
     <GundamForm />
 

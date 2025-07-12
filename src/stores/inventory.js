@@ -81,6 +81,25 @@ export const useInventoryStore = defineStore('inventory', {
         return gradeMatch && searchMatch;
       });
     },
+
+    /**
+     * [신규] '취미 자금'을 계산하는 getter입니다.
+     * 보관 목록과 판매 목록에 있는 모든 아이템의 구매 가격을 합산합니다.
+     * @param {object} state - 현재 스토어의 state
+     * @returns {number} - 계산된 총 구매 가격
+     */
+    totalPurchasePrice: (state) => {
+      // 1. 스프레드(...) 연산자를 사용해 보관 목록과 판매 목록을 하나의 배열로 합칩니다.
+      const allStock = [...state.inStorageList, ...state.forSaleList];
+
+      // 2. reduce 메서드를 사용해 합쳐진 배열의 모든 아이템을 순회하며 값을 누적합니다.
+      //    - 'sum'은 현재까지 누적된 값 (초기값 0)
+      //    - 'item'은 배열의 각 건담 객체
+      //    - 'item.purchasePrice || 0'는 purchasePrice가 null이나 undefined일 경우 0으로 처리하여 오류를 방지합니다.
+      const total = allStock.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
+      
+      return total;
+    },
   },
 
   // ----------------------------------------------------------------
@@ -95,7 +114,7 @@ export const useInventoryStore = defineStore('inventory', {
     setGradeFilter(grade) {
       this.gradeFilter = grade;
     },
-    
+
     /**
      * 신규 건담을 등록하는 액션입니다.
      * 이제 새로운 건담은 기본적으로 '보관 목록(inStorageList)'에 추가됩니다.
