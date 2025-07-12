@@ -18,6 +18,21 @@ const gundams = ref([
   { id: 2, grade: 'HG', name: '에어리얼', quantity: 2, status: '판매' },
   { id: 3, grade: 'RG', name: '사자비', quantity: 1, status: '보관' },
 ]);
+
+// 1. 자식 컴포넌트(GundamForm)가 보낸 이벤트를 처리할 함수를 정의합니다.
+//    이벤트와 함께 전달된 데이터는 함수의 매개변수(newGundamData)로 받게 됩니다.
+const handleAddGundam = (newGundamData) => {
+  // 2. 전달받은 새 건담 데이터에 고유한 id를 추가합니다.
+  //    Date.now()는 현재 시간을 밀리초로 반환하므로, 간단한 고유 ID로 사용하기 좋습니다.
+  const newGundamWithId = {
+    ...newGundamData,
+    id: Date.now()
+  };
+
+  // 3. 기존 건담 목록 배열(gundams.value)에 새로운 건담을 추가합니다.
+  //    'gundams'가 'ref'로 만든 반응형 데이터이므로, 배열에 push하는 순간 화면이 자동으로 업데이트됩니다.
+  gundams.value.push(newGundamWithId);
+};
 </script>
 
 <template>
@@ -30,7 +45,12 @@ const gundams = ref([
   </header>
   <main>
     <!-- 등록 폼 컴포넌트가 이 자리에 렌더링됩니다. -->
-    <GundamForm />
+    <!-- 
+      4. 자식 컴포넌트에 이벤트 리스너를 추가합니다.
+      - '@add-gundam': GundamForm 컴포넌트가 'add-gundam' 이벤트를 발생시키면
+      - 'handleAddGundam': 우리가 위에서 만든 handleAddGundam 함수를 실행하라는 의미입니다.
+    -->
+    <GundamForm @add-gundam="handleAddGundam" />
 
     <!-- 재고 목록 컴포넌트가 이 자리에 렌더링됩니다. -->
     <!-- 
