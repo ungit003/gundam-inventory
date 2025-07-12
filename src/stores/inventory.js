@@ -235,7 +235,70 @@ export const useInventoryStore = defineStore('inventory', {
     // TODO: 아래 액션들은 8단계(다중 시트 엑셀)에서 다시 구현할 예정입니다.
     //       현재 데이터 구조와 맞지 않으므로, 우선 주석 처리하여 오류를 방지합니다.
     // ----------------------------------------------------------------
-    // async loadFromExcel(file) { ... },
-    // createExcel() { ... },
+    /**
+     * [수정] 현재 모든 목록 데이터를 3개의 분리된 시트로 구성된 엑셀 파일로 생성합니다.
+     */
+    createExcel() {
+      // 1. 세 목록이 모두 비어있는지 확인합니다.
+      if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
+        alert('저장할 데이터가 없습니다.');
+        return;
+      }
+
+      // 2. 각 목록 데이터를 기반으로 각각의 워크시트(Worksheet)를 생성합니다.
+      const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
+      const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
+      const wsSold = XLSX.utils.json_to_sheet(this.soldList);
+
+      // 3. 새로운 워크북(Workbook)을 만듭니다. 엑셀 파일 하나를 의미합니다.
+      const workbook = XLSX.utils.book_new();
+
+      // 4. 생성된 워크북에 각 워크시트를 원하는 이름으로 추가합니다.
+      XLSX.utils.book_append_sheet(workbook, wsStorage, '보관목록');
+      XLSX.utils.book_append_sheet(workbook, wsSale, '판매목록');
+      XLSX.utils.book_append_sheet(workbook, wsSold, '판매완료');
+
+      // 5. 최종적으로 완성된 워크북을 실제 .xlsx 파일로 다운로드시킵니다.
+      XLSX.writeFile(workbook, 'gundam_inventory.xlsx');
+    },
+
+    /**
+     * [신규/수정] 다중 시트를 가진 엑셀 파일을 읽어 각 목록 state를 채웁니다.
+     * @param {File} file - 사용자가 업로드한 엑셀 파일
+     */
+    async loadFromExcel(file) {
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+
+        // 1. 불러오기 전에 기존의 모든 목록을 깨끗하게 비웁니다.
+        this.inStorageList = [];
+        this.forSaleList = [];
+        this.soldList = [];
+        
+        // 2. 각 시트 이름에 해당하는 데이터를 읽어와 해당 state에 할당합니다.
+        //    시트가 존재하지 않을 경우를 대비해 || [] 연산자로 안전하게 처리합니다.
+        const wsStorage = workbook.Sheets['보관목록'];
+        if (wsStorage) {
+          this.inStorageList = XLSX.utils.sheet_to_json(wsStorage);
+        }
+
+        const wsSale = workbook.Sheets['판매목록'];
+        if (wsSale) {
+          this.forSaleList = XLSX.utils.sheet_to_json(wsSale);
+        }
+
+        const wsSold = workbook.Sheets['판매완료'];
+        if (wsSold) {
+          this.soldList = XLSX.utils.sheet_to_json(wsSold);
+        }
+
+        alert('엑셀 파일을 성공적으로 불러왔습니다.');
+
+      } catch (error) {
+        console.error('파일을 읽는 중 오류가 발생했습니다:', error);
+        alert('파일을 읽는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.');
+      }
+    },
   },
 });
