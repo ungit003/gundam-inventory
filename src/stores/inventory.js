@@ -242,29 +242,37 @@ export const useInventoryStore = defineStore('inventory', {
      * [수정] 현재 모든 목록 데이터를 3개의 분리된 시트로 구성된 엑셀 파일로 생성합니다.
      */
     createExcel() {
-      // 1. 세 목록이 모두 비어있는지 확인합니다.
       if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
         alert('저장할 데이터가 없습니다.');
         return;
       }
 
-      // 2. 각 목록 데이터를 기반으로 각각의 워크시트(Worksheet)를 생성합니다.
+      // 1. 생성할 파일의 이름을 상수로 정의하여 관리 용이성을 높입니다.
+      const newFileName = 'gundam_inventory.xlsx';
+
       const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
       const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
       const wsSold = XLSX.utils.json_to_sheet(this.soldList);
-
-      // 3. 새로운 워크북(Workbook)을 만듭니다. 엑셀 파일 하나를 의미합니다.
+      
       const workbook = XLSX.utils.book_new();
-
-      // 4. 생성된 워크북에 각 워크시트를 원하는 이름으로 추가합니다.
+      
       XLSX.utils.book_append_sheet(workbook, wsStorage, '보관목록');
       XLSX.utils.book_append_sheet(workbook, wsSale, '판매목록');
       XLSX.utils.book_append_sheet(workbook, wsSold, '판매완료');
+      
+      // 2. 정의된 이름으로 파일을 다운로드시킵니다.
+      XLSX.writeFile(workbook, newFileName);
+      
+      // 3. --- 핵심 수정 부분 ---
+      //    파일 다운로드 직후, 스토어의 loadedFileName 상태를 방금 생성한 파일 이름으로 업데이트합니다.
+      //    이것이 바로 "자동으로 불러온 것처럼" 만드는 핵심 로직입니다.
+      this.loadedFileName = newFileName;
+      // --------------------
 
-      // 5. 최종적으로 완성된 워크북을 실제 .xlsx 파일로 다운로드시킵니다.
-      XLSX.writeFile(workbook, 'gundam_inventory.xlsx');
+      // 4. 사용자에게 변경된 작업 흐름을 명확하게 안내합니다.
+      alert(`'${newFileName}' 파일이 생성되었습니다. 이제부터 '현재 파일에 저장'을 사용하면 이 파일에 덮어쓰게 됩니다.`);
     },
-
+    
     /**
      * [신규/수정] 다중 시트를 가진 엑셀 파일을 읽어 각 목록 state를 채웁니다.
      * @param {File} file - 사용자가 업로드한 엑셀 파일
