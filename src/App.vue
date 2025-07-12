@@ -1,45 +1,73 @@
 <!-- src/App.vue -->
 
 <script setup>
-// 데이터(ref)와 이벤트 핸들러가 모두 필요 없어졌으므로 삭제합니다.
+// 1. 필요한 함수와 컴포넌트, 스토어를 가져옵니다.
+import { storeToRefs } from 'pinia';
+import { useInventoryStore } from './stores/inventory';
+
+// 우리가 만든 재사용 가능한 목록 컴포넌트를 가져옵니다.
 import GundamList from './components/GundamList.vue';
+// 다른 컴포넌트들도 추후 사용을 위해 미리 import 해둡니다.
 import GundamForm from './components/GundamForm.vue';
-// 1. FileUpload 컴포넌트를 가져옵니다.
 import FileUpload from './components/FileUpload.vue';
+
+// 2. Pinia 스토어를 사용 준비합니다.
+const store = useInventoryStore();
+
+// 3. storeToRefs를 사용하여 스토어의 state를 반응성을 유지한 채로 가져옵니다.
+//    1단계에서 정의한 세 개의 목록(state)을 구조 분해 할당으로 편리하게 가져옵니다.
+const { inStorageList, forSaleList, soldList } = storeToRefs(store);
 </script>
 
 <template>
-  <!-- 
-    이곳이 우리 애플리케이션의 최상위 껍데기(레이아웃)가 됩니다.
-    import로 가져온 컴포넌트들을 원하는 위치에 배치합니다.
-  -->
   <header>
     <h1>내 건담 재고 관리</h1>
   </header>
   <main>
-    <!-- 2. 적절한 위치에 컴포넌트를 배치합니다. -->
-    <FileUpload />
+    <!-- 이 컴포넌트들은 다음 단계들에서 순차적으로 기능을 구현하고 수정할 예정입니다. -->
+    <FileUpload /> 
     <GundamForm />
+
+    <hr class="divider">
+
     <!-- 
-      자식에게 데이터를 전달하고 이벤트를 받을 필요가 없어졌습니다.
-      :gundams, @add-gundam 코드를 모두 제거합니다.
+      4. GundamList 컴포넌트를 재사용하여 세 개의 목록을 각각 렌더링합니다.
+         - :title="판매 목록" 처럼 props를 통해 각 컴포넌트에 다른 데이터를 전달합니다[5].
+         - 하나의 컴포넌트가 props 값에 따라 각기 다른 제목, 데이터, 구조를 가지게 됩니다.
     -->
-    <GundamList />
+    <GundamList 
+      title="판매 목록" 
+      :items="forSaleList" 
+      listType="sale" 
+    />
+    <GundamList 
+      title="보관 목록" 
+      :items="inStorageList" 
+      listType="storage" 
+    />
+    <GundamList 
+      title="판매 완료 목록" 
+      :items="soldList" 
+      listType="sold" 
+    />
   </main>
 </template>
 
 <style scoped>
-/* App.vue의 최상위 레이아웃 스타일을 정의합니다. */
 header {
-  background-color: #41B883; /* Vue의 상징색 */
+  background-color: #41B883;
   color: white;
   padding: 1rem;
   text-align: center;
 }
-
 main {
-  max-width: 800px;
-  margin: 0 auto; /* 중앙 정렬 */
+  max-width: 960px; /* 더 넓은 화면을 위해 너비 조정 */
+  margin: 0 auto;
   padding: 1rem;
+}
+.divider {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #eee;
 }
 </style>

@@ -1,61 +1,71 @@
 <!-- src/components/GundamList.vue -->
 
 <script setup>
-// 이 영역에는 나중에 컴포넌트의 동작 로직(JavaScript)을 작성합니다.
-// 1. Pinia에서 storeToRefs 함수와, 우리가 만든 스토어를 가져옵니다.
-import { storeToRefs } from 'pinia';
-import { useInventoryStore } from '../stores/inventory';
-
-// 2. useInventoryStore 함수를 실행하여 스토어 인스턴스를 가져옵니다.
-const store = useInventoryStore();
-
-// 1. store.gundams 대신, 필터링된 getter인 'filteredGundams'를 가져옵니다.
-//    store.searchTerm도 가져와서 v-model에 연결합니다.
-const { filteredGundams, totalCount } = storeToRefs(store);
+// 1. defineProps: 이 컴포넌트가 부모로부터 어떤 데이터를 받을지 명시적으로 선언합니다[3][4].
+//    - title: 표의 제목 (예: "판매 목록")
+//    - items: 표에 표시할 실제 데이터가 담긴 배열
+//    - listType: 목록의 종류('storage', 'sale', 'sold')를 구분하여, UI를 다르게 표시하는 데 사용됩니다.
+defineProps({
+  title: {
+    type: String,
+    required: true,
+  },
+  items: {
+    type: Array,
+    required: true,
+  },
+  listType: {
+    type: String,
+    required: true,
+    // listType prop은 이 세 가지 문자열 중 하나여야 한다고 검증(validate)할 수 있습니다.
+    validator: (value) => ['storage', 'sale', 'sold'].includes(value),
+  }
+});
 </script>
 
 <template>
-  <!-- 이 영역에는 컴포넌트의 화면 구조(HTML)를 작성합니다. -->
-  <div class="gundam-list-container">
-    <!-- getters로 만든 totalCount를 사용합니다. -->
-    <h2>재고 목록 (총 {{ totalCount }}개)</h2>
-
-    <!-- 2. 검색 입력창을 추가합니다. -->
-    <!-- v-model="store.searchTerm"을 통해 입력창과 스토어의 searchTerm state를 직접 연결합니다. -->
-    <!-- 사용자가 타이핑할 때마다 store.searchTerm이 실시간으로 바뀌고, filteredGundams가 자동으로 다시 계산됩니다. -->
-    <input 
-      type="text" 
-      v-model="store.searchTerm" 
-      placeholder="건담 이름으로 검색..."
-      class="search-input"
-    >
-    
+  <div class="list-section">
+    <!-- 부모로부터 받은 title과 items 배열의 길이를 동적으로 표시합니다. -->
+    <h2>{{ title }} (총 {{ items.length }}개)</h2>
     <table>
       <thead>
         <tr>
+          <!-- 2. 조건부 렌더링(v-if)을 사용하여 헤더를 동적으로 구성합니다. -->
           <th>등급</th>
           <th>이름</th>
           <th>수량</th>
-          <th>상태</th>
-          <th>관리</th>
+          <th>구매 가격</th>
+          <!-- '판매 완료' 목록일 때만 '판매 가격'과 '판매 매체' 헤더를 보여줍니다. -->
+          <th v-if="listType === 'sold'">판매 가격</th>
+          <th v-if="listType === 'sold'">판매 매체</th>
+          <!-- '판매 완료' 목록이 아닐 때만 '관리' 헤더를 보여줍니다. -->
+          <th v-if="listType !== 'sold'">관리</th>
         </tr>
       </thead>
       <tbody>
-        <!-- 
-          props.gundams가 아닌, 스토어에서 직접 가져온 gundams를 사용합니다.
-          동작 방식은 동일합니다.
-        -->
-        <!-- 3. v-for의 대상을 'filteredGundams'로 변경합니다. -->
-        <tr v-for="gundam in filteredGundams" :key="gundam.id">
-          <td>{{ gundam.grade }}</td>
-          <td>{{ gundam.name }}</td>
-          <td>{{ gundam.quantity }}</td>
-          <td>{{ gundam.status }}</td>
-          <!-- 
-            4. 삭제 버튼 클릭 시, 스토어의 deleteGundam 액션을 직접 호출합니다.
-               이때 삭제할 건담의 id를 인자로 넘겨줍니다.
-          -->
-          <td><button @click="store.deleteGundam(gundam.id)">삭제</button></td>
+        <!-- 3. 목록이 비어있을 때 사용자에게 안내 메시지를 표시합니다. -->
+        <tr v-if="items.length === 0">
+          <!-- :colspan을 동적으로 계산하여 표의 전체 너비를 차지하게 합니다. -->
+          <td :colspan="listType === 'sold' ? 6 : 5" class="empty-list">
+            해당 목록이 비어있습니다.
+          </td>
+        </tr>
+        <!-- 4. v-for를 사용해 부모로부터 받은 items 배열의 각 항목을 행(tr)으로 렌더링합니다. -->
+        <tr v-for="item in items" :key="item.id">
+          <td>{{ item.grade }}</td>
+          <td>{{ item.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <!-- toLocaleString()을 사용해 숫자에 3자리 콤마를 추가하고, 데이터가 없을 경우를 처리합니다. -->
+          <td>{{ item.purchasePrice ? `${item.purchasePrice.toLocaleString()} 원` : '미입력' }}</td>
+          
+          <!-- 5. 데이터 셀(td)도 헤더와 마찬가지로 listType에 따라 조건부로 렌더링합니다. -->
+          <td v-if="listType === 'sold'">{{ item.salePrice ? `${item.salePrice.toLocaleString()} 원` : '미입력' }}</td>
+          <td v-if="listType === 'sold'">{{ item.saleMedium || '미입력' }}</td>
+          
+          <td v-if="listType !== 'sold'">
+            <!-- '관리' 기능은 3단계에서 구현할 예정이므로, 임시 버튼을 둡니다. -->
+            <button>이동/삭제</button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -63,29 +73,27 @@ const { filteredGundams, totalCount } = storeToRefs(store);
 </template>
 
 <style scoped>
-/* 
-  'scoped' 속성은 이 스타일이 현재 컴포넌트(GundamList.vue)에만
-  적용되도록 만들어 줍니다. 다른 컴포넌트에 영향을 주지 않아 안전합니다.
-*/
-.gundam-list-container {
-  margin-top: 2rem;
+.list-section {
+  margin-bottom: 2.5rem; /* 목록 간 간격 조정 */
 }
-
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  font-size: 0.9rem; /* 폰트 크기 조정 */
 }
-
 th, td {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
+  border: 1px solid #e0e0e0; /* 테두리 색상 연하게 */
+  padding: 0.75rem;
   text-align: left;
+  vertical-align: middle; /* 세로 중앙 정렬 */
 }
-
-.search-input {
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
+th {
+  background-color: #f9f9f9; /* 헤더 배경색 변경 */
+}
+.empty-list {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
 }
 </style>
