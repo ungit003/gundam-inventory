@@ -97,6 +97,56 @@ export const useInventoryStore = defineStore('inventory', {
       }
     },
 
+    /**
+     * [신규 액션 1] 보관 목록 -> 판매 목록으로 이동
+     * @param {number} gundamId - 이동시킬 건담의 ID
+     */
+    moveToSale(gundamId) {
+      // 1. '보관 목록'에서 해당 ID를 가진 아이템의 인덱스(위치)를 찾습니다.
+      const index = this.inStorageList.findIndex(g => g.id === gundamId);
+      
+      // 2. 아이템을 찾았다면(index가 -1이 아니라면),
+      if (index !== -1) {
+        // 3. splice를 사용해 '보관 목록'에서 해당 아이템을 제거하고, 그 아이템을 반환받습니다.
+        const [itemToMove] = this.inStorageList.splice(index, 1);
+        // 4. 반환받은 아이템을 '판매 목록'에 추가(push)합니다.
+        this.forSaleList.push(itemToMove);
+      }
+    },
+
+    /**
+     * [신규 액션 2] 판매 목록 -> 보관 목록으로 이동
+     * @param {number} gundamId - 이동시킬 건담의 ID
+     */
+    moveToStorage(gundamId) {
+      const index = this.forSaleList.findIndex(g => g.id === gundamId);
+      if (index !== -1) {
+        const [itemToMove] = this.forSaleList.splice(index, 1);
+        this.inStorageList.push(itemToMove);
+      }
+    },
+
+    /**
+     * [신규 액션 3] 판매 목록 -> 판매 완료 목록으로 이동
+     * @param {number} gundamId - 판매 완료 처리할 건담의 ID
+     */
+    markAsSold(gundamId) {
+      // (참고) 7단계에서는 이 액션이 판매 가격 등을 입력받는 모달과 연동되도록 확장됩니다.
+      // 지금은 단순 이동 기능만 구현합니다.
+      const index = this.forSaleList.findIndex(g => g.id === gundamId);
+      if (index !== -1) {
+        const [itemToMove] = this.forSaleList.splice(index, 1);
+        
+        // '판매 완료 목록'에 맞는 데이터 구조로 변환합니다.
+        const soldItem = {
+          ...itemToMove,
+          salePrice: itemToMove.salePrice || null, // 기존에 값이 없었으므로 null로 설정
+          saleMedium: itemToMove.saleMedium || '미지정', // '미지정'으로 초기값 설정
+        };
+        
+        this.soldList.push(soldItem);
+      }
+    },
     // ----------------------------------------------------------------
     // TODO: 아래 액션들은 8단계(다중 시트 엑셀)에서 다시 구현할 예정입니다.
     //       현재 데이터 구조와 맞지 않으므로, 우선 주석 처리하여 오류를 방지합니다.

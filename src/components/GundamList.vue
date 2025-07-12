@@ -21,6 +21,10 @@ defineProps({
     validator: (value) => ['storage', 'sale', 'sold'].includes(value),
   }
 });
+
+// 1. Pinia 스토어를 사용하기 위해 import하고, store 인스턴스를 생성합니다.
+import { useInventoryStore } from '../stores/inventory';
+const store = useInventoryStore();
 </script>
 
 <template>
@@ -62,9 +66,28 @@ defineProps({
           <td v-if="listType === 'sold'">{{ item.salePrice ? `${item.salePrice.toLocaleString()} 원` : '미입력' }}</td>
           <td v-if="listType === 'sold'">{{ item.saleMedium || '미입력' }}</td>
           
+          <!-- '판매 완료' 목록이 아닐 때만 이 '관리' 열(td)을 보여줍니다. -->
           <td v-if="listType !== 'sold'">
-            <!-- '관리' 기능은 3단계에서 구현할 예정이므로, 임시 버튼을 둡니다. -->
-            <button>이동/삭제</button>
+            
+            <!-- [설명 4] 조건부로 다른 버튼 그룹 보여주기 (v-if) -->
+            <!-- 이 목록의 종류(listType)가 'storage'일 때만 이 div와 안의 버튼들이 화면에 나타납니다. -->
+            <div v-if="listType === 'storage'" class="button-group">
+              
+              <!-- [설명 5] 버튼과 스토어 액션 연결 (@click) -->
+              <!-- 
+                @click: 사용자가 이 버튼을 '클릭하면'
+                store.moveToSale(item.id): store(리모컨)의 moveToSale(판매 목록으로 이동) 버튼을 누른다.
+                                           이때, 어떤 아이템인지 알려주기 위해 현재 행의 고유 ID(item.id)를 함께 보낸다.
+              -->
+              <button @click="store.moveToSale(item.id)" class="action-button move">판매 목록으로</button>
+              <button @click="store.deleteGundam(item.id)" class="action-button delete">삭제</button>
+            </div>
+            
+            <!-- 이 목록의 종류(listType)가 'sale'일 때만 이 div와 안의 버튼들이 화면에 나타납니다. -->
+            <div v-else-if="listType === 'sale'" class="button-group">
+              <button @click="store.moveToStorage(item.id)" class="action-button move">보관 목록으로</button>
+              <button @click="store.markAsSold(item.id)" class="action-button complete">판매 완료</button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -96,4 +119,30 @@ th {
   color: #888;
   padding: 2rem;
 }
+
+/* 버튼들을 담는 div 스타일 */
+.button-group {
+  display: flex;
+  flex-wrap: wrap; /* 버튼이 많아지면 줄바꿈 되도록 */
+  gap: 0.5rem;
+}
+
+/* 개별 버튼 공통 스타일 */
+.action-button {
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: white;
+  transition: opacity 0.2s;
+}
+.action-button:hover {
+  opacity: 0.8;
+}
+
+/* 기능별 버튼 색상 */
+.action-button.move { background-color: #3498db; }      /* 이동: 파란색 */
+.action-button.delete { background-color: #e74c3c; }    /* 삭제: 빨간색 */
+.action-button.complete { background-color: #2ecc71; }  /* 완료: 초록색 */
 </style>
