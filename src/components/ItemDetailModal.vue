@@ -29,6 +29,14 @@ const saveChanges = () => {
   // 스토어의 updateItemDetails 액션을 호출하여 변경된 데이터를 저장합니다.
   store.updateItemDetails(localItem.value);
 };
+
+const deleteItem = () => {
+  if (confirm(`'${props.item.name}' 항목을 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+    store.deleteGundam(props.item.id);
+    // 삭제 후에는 모달을 닫아야 하므로, closeDetailModal도 호출합니다.
+    store.closeDetailModal();
+  }
+};
 </script>
 
 <template>
@@ -79,6 +87,7 @@ const saveChanges = () => {
         </form>
       </div>
       <div class="modal-footer">
+        <button @click="deleteItem" class="button delete">삭제</button>
         <button @click="store.closeDetailModal()" class="button secondary">취소</button>
         <button @click="saveChanges" class="button primary">저장</button>
       </div>
@@ -148,4 +157,12 @@ const saveChanges = () => {
 }
 .button.primary { background-color: #2ecc71; color: white; }
 .button.secondary { background-color: #ccc; }
+
+.modal-footer {
+  justify-content: space-between; /* 버튼들을 양쪽 끝으로 정렬 */
+}
+.button.delete {
+  background-color: #e74c3c;
+  color: white;
+}
 </style>

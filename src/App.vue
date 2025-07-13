@@ -14,8 +14,7 @@ import GundamForm from './components/GundamForm.vue';
 import FileUpload from './components/FileUpload.vue';
 
 import FilterControls from './components/FilterControls.vue';
-import HobbyFund from './components/HobbyFund.vue';
-// import FinancialDashboard from './components/FinancialDashboard.vue'; // HobbyFund에서 이름 변경
+import FinancialDashboard from './components/FinancialDashboard.vue'; // HobbyFund에서 이름 변경
 
 import SaleConfirmModal from './components/SaleConfirmModal.vue';
 import ItemDetailModal from './components/ItemDetailModal.vue';
