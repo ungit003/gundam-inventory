@@ -92,14 +92,14 @@ const store = useInventoryStore();
                 store.moveToSale(item.id): store(리모컨)의 moveToSale(판매 목록으로 이동) 버튼을 누른다.
                                            이때, 어떤 아이템인지 알려주기 위해 현재 행의 고유 ID(item.id)를 함께 보낸다.
               -->
-              <button @click="store.moveToSale(item.id)" class="action-button move">판매 목록으로</button>
-              <button @click="store.deleteGundam(item.id)" class="action-button delete">삭제</button>
+              <button @click.stop="store.moveToSale(item.id)" class="action-button move">판매 목록으로</button>
+              <button @click.stop="store.deleteGundam(item.id)" class="action-button delete">삭제</button>
             </div>
             
             <!-- 이 목록의 종류(listType)가 'sale'일 때만 이 div와 안의 버튼들이 화면에 나타납니다. -->
             <div v-else-if="listType === 'sale'" class="button-group">
-              <button @click="store.moveToStorage(item.id)" class="action-button move">보관 목록으로</button>
-              <button @click="store.openSaleModal(item.id)" class="action-button complete">판매 완료</button>
+              <button @click.stop="store.moveToStorage(item.id)" class="action-button move">보관 목록으로</button>
+              <button @click.stop="store.openSaleModal(item.id)" class="action-button complete">판매 완료</button>
             </div>
           </td>
         </tr>
