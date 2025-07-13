@@ -59,23 +59,71 @@ export const useInventoryStore = defineStore('inventory', {
   // ----------------------------------------------------------------
   getters: {
     // --- 필터링된 목록 Getters ---
+    /**
+     * [수정] 필터링된 보관 목록을 반환하는 getter입니다.
+     * 검색 로직이 여러 필드를 대상으로 하도록 확장됩니다.
+     */
     filteredInStorageList: (state) => {
-      return state.inStorageList.filter(item => 
-        (state.gradeFilter === 'All' || item.grade === state.gradeFilter) &&
-        item.name.toLowerCase().includes(state.searchTerm.toLowerCase())
-      );
+      // 검색어가 비어있으면 필터링을 수행하지 않고 전체를 반환하여 성능을 최적화합니다.
+      if (!state.searchTerm.trim()) {
+        return state.inStorageList.filter(item => 
+          state.gradeFilter === 'All' || item.grade === state.gradeFilter
+        );
+      }
+      
+      const lowerCaseSearchTerm = state.searchTerm.toLowerCase();
+      
+      return state.inStorageList.filter(item => {
+        const gradeMatch = state.gradeFilter === 'All' || item.grade === state.gradeFilter;
+        
+        // [핵심 변경점] 검색 조건 확장
+        // 아이템의 여러 텍스트 속성 중 하나라도 검색어를 포함하면 true가 됩니다.
+        const searchMatch = 
+          item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+          item.grade.toLowerCase().includes(lowerCaseSearchTerm) ||
+          (item.purchaseLocation && item.purchaseLocation.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (item.details && item.details.toLowerCase().includes(lowerCaseSearchTerm));
+          
+        return gradeMatch && searchMatch;
+      });
     },
+
+    // 판매 목록과 판매 완료 목록도 동일한 로직으로 검색 기능을 강화합니다.
     filteredForSaleList: (state) => {
-      return state.forSaleList.filter(item =>
-        (state.gradeFilter === 'All' || item.grade === state.gradeFilter) &&
-        item.name.toLowerCase().includes(state.searchTerm.toLowerCase())
-      );
+      if (!state.searchTerm.trim()) {
+        return state.forSaleList.filter(item => 
+          state.gradeFilter === 'All' || item.grade === state.gradeFilter
+        );
+      }
+      const lowerCaseSearchTerm = state.searchTerm.toLowerCase();
+      return state.forSaleList.filter(item => {
+        const gradeMatch = state.gradeFilter === 'All' || item.grade === state.gradeFilter;
+        const searchMatch = 
+          item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+          item.grade.toLowerCase().includes(lowerCaseSearchTerm) ||
+          (item.purchaseLocation && item.purchaseLocation.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (item.details && item.details.toLowerCase().includes(lowerCaseSearchTerm));
+        return gradeMatch && searchMatch;
+      });
     },
+
     filteredSoldList: (state) => {
-      return state.soldList.filter(item =>
-        (state.gradeFilter === 'All' || item.grade === state.gradeFilter) &&
-        item.name.toLowerCase().includes(state.searchTerm.toLowerCase())
-      );
+      if (!state.searchTerm.trim()) {
+        return state.soldList.filter(item => 
+          state.gradeFilter === 'All' || item.grade === state.gradeFilter
+        );
+      }
+      const lowerCaseSearchTerm = state.searchTerm.toLowerCase();
+      return state.soldList.filter(item => {
+        const gradeMatch = state.gradeFilter === 'All' || item.grade === state.gradeFilter;
+        const searchMatch = 
+          item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+          item.grade.toLowerCase().includes(lowerCaseSearchTerm) ||
+          (item.purchaseLocation && item.purchaseLocation.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (item.details && item.details.toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (item.saleMedium && item.saleMedium.toLowerCase().includes(lowerCaseSearchTerm)); // 판매 완료 목록은 판매 매체도 검색 대상에 포함
+        return gradeMatch && searchMatch;
+      });
     },
 
     // --- 금융 정보 계산 Getters ---

@@ -33,6 +33,19 @@ const filterGradeOptions = ['All', ...GRADE_OPTIONS];
         {{ grade }}
       </button>
     </div>
+    <div class="filter-group search-group">
+      <span class="filter-label">통합 검색:</span>
+      <!-- 
+        [수정] placeholder 텍스트를 변경하여
+        어떤 항목들이 검색 대상인지 사용자에게 알려줍니다.
+      -->
+      <input
+        type="text"
+        v-model="store.searchTerm"
+        placeholder="이름, 등급, 구매처, 설명 등으로 검색..."
+        class="search-input"
+      >
+    </div>
   </div>
 </template>
 
@@ -66,5 +79,14 @@ const filterGradeOptions = ['All', ...GRADE_OPTIONS];
   color: white;
   border-color: #3498db;
   font-weight: bold;
+}
+.search-group {
+  flex-grow: 1; /* 남은 공간을 모두 차지하도록 */
+}
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 </style>

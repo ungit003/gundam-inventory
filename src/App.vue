@@ -36,7 +36,7 @@ const {
 
 <template>
   <header>
-    <h1>건담 재고 관리</h1>
+    <h1>건담 재고 관리 v2.0</h1>
   </header>
   <main>
     <!-- [수정] 각 기능 구역을 CollapsibleSection으로 감쌉니다. -->
@@ -72,8 +72,12 @@ const {
   <!-- [신규] 상세 정보 모달을 조건부로 렌더링합니다. -->
   <ItemDetailModal v-if="isDetailModalVisible && itemForDetail" :item="itemForDetail" />
 
-  <footer>
-    <!-- 저작권 푸터는 6단계에서 추가될 예정입니다. -->
+  <footer class="app-footer">
+    <p>&copy; 2024 Your Name or Company. All Rights Reserved.</p>
+    <p>
+      이 애플리케이션은 개인 포트폴리오 목적으로 제작되었습니다.
+      <a href="https://github.com/your-repo-link" target="_blank">GitHub Repository</a>
+    </p>
   </footer>
 </template>
 
@@ -93,5 +97,29 @@ main {
   margin: 2rem 0;
   border: 0;
   border-top: 1px solid #eee;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 화면 전체 높이를 차지하도록 */
+}
+main {
+  flex-grow: 1; /* main 영역이 남은 공간을 모두 차지하도록 */
+  /* ... 기존 main 스타일 ... */
+}
+.app-footer {
+  text-align: center;
+  padding: 2rem;
+  background-color: #343a40;
+  color: #adb5bd;
+  font-size: 0.9rem;
+}
+.app-footer a {
+  color: #ffffff;
+  text-decoration: none;
+}
+.app-footer a:hover {
+  text-decoration: underline;
 }
 </style>
