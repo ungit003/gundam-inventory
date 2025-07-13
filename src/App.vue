@@ -6,13 +6,16 @@ import { storeToRefs } from 'pinia';
 import { useInventoryStore } from './stores/inventory';
 
 // 우리가 만든 재사용 가능한 목록 컴포넌트를 가져옵니다.
+import CollapsibleSection from './components/CollapsibleSection.vue';
 import GundamList from './components/GundamList.vue';
+
 // 다른 컴포넌트들도 추후 사용을 위해 미리 import 해둡니다.
 import GundamForm from './components/GundamForm.vue';
 import FileUpload from './components/FileUpload.vue';
 
 import FilterControls from './components/FilterControls.vue';
 import HobbyFund from './components/HobbyFund.vue';
+// import FinancialDashboard from './components/FinancialDashboard.vue'; // HobbyFund에서 이름 변경
 
 import SaleConfirmModal from './components/SaleConfirmModal.vue';
 
@@ -34,37 +37,27 @@ const {
     <h1>건담 재고 관리</h1>
   </header>
   <main>
-    <!-- 이 컴포넌트들은 다음 단계들에서 순차적으로 기능을 구현하고 수정할 예정입니다. -->
-    <HobbyFund />
-    <FileUpload /> 
-    <GundamForm />
+    <!-- [수정] 각 기능 구역을 CollapsibleSection으로 감쌉니다. -->
+    
+    <CollapsibleSection title="종합 자산 현황">
+      <!-- <slot> 영역에 들어갈 내용입니다. -->
+      <FinancialDashboard />
+    </CollapsibleSection>
 
-    <hr class="divider">
+    <CollapsibleSection title="신규 등록 및 파일 관리">
+      <!-- <slot> 영역에 여러 컴포넌트를 함께 넣을 수도 있습니다. -->
+      <GundamForm />
+      <hr class="divider">
+      <FileUpload />
+    </CollapsibleSection>
 
-    <!-- 3. 목록들이 시작되기 전에 필터 컨트롤 컴포넌트를 배치합니다. -->
-    <FilterControls />
-
-    <!-- 
-      4. GundamList 컴포넌트를 재사용하여 세 개의 목록을 각각 렌더링합니다.
-         - :title="판매 목록" 처럼 props를 통해 각 컴포넌트에 다른 데이터를 전달합니다[5].
-         - 하나의 컴포넌트가 props 값에 따라 각기 다른 제목, 데이터, 구조를 가지게 됩니다.
-    -->
-    <!-- 4. GundamList 컴포넌트에 props로 전달하는 :items를 필터링된 getter로 교체합니다. -->
-    <GundamList 
-      title="판매 목록" 
-      :items="filteredForSaleList" 
-      listType="sale" 
-    />
-    <GundamList 
-      title="보관 목록" 
-      :items="filteredInStorageList" 
-      listType="storage" 
-    />
-    <GundamList 
-      title="판매 완료 목록" 
-      :items="filteredSoldList" 
-      listType="sold" 
-    />
+    <CollapsibleSection title="재고 목록 및 필터">
+      <FilterControls />
+      <hr class="divider">
+      <GundamList title="판매 목록" :items="filteredForSaleList" listType="sale" />
+      <GundamList title="보관 목록" :items="filteredInStorageList" listType="storage" />
+      <GundamList title="판매 완료 목록" :items="filteredSoldList" listType="sold" />
+    </CollapsibleSection>
   </main>
 
   <!-- 
@@ -73,6 +66,10 @@ const {
     - :item="itemToSell"을 통해 모달이 어떤 아이템 정보를 표시해야 할지 데이터를 전달합니다.
   -->
   <SaleConfirmModal v-if="isSaleModalVisible && itemToSell" :item="itemToSell" />
+
+  <footer>
+    <!-- 저작권 푸터는 6단계에서 추가될 예정입니다. -->
+  </footer>
 </template>
 
 <style scoped>

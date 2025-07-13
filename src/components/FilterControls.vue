@@ -3,6 +3,7 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 import { useInventoryStore } from '../stores/inventory';
+import { GRADE_OPTIONS } from '../config.js';
 
 const store = useInventoryStore();
 
@@ -10,7 +11,7 @@ const store = useInventoryStore();
 const { gradeFilter } = storeToRefs(store);
 
 // 2. 필터링할 등급 목록을 정의합니다. 'All'을 추가하여 전체보기를 구현합니다.
-const gradeOptions = ['All', 'HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'Mega', '완성품'];
+const filterGradeOptions = ['All', ...GRADE_OPTIONS];
 </script>
 
 <template>
@@ -23,7 +24,7 @@ const gradeOptions = ['All', 'HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'M
         - :class: 현재 선택된 필터(gradeFilter)와 버튼의 등급이 일치하면 'active' 클래스를 적용합니다.
       -->
       <button
-        v-for="grade in gradeOptions"
+        v-for="grade in filterGradeOptions"
         :key="grade"
         @click="store.setGradeFilter(grade)"
         :class="{ active: gradeFilter === grade }"
