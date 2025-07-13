@@ -10,7 +10,7 @@ const store = useInventoryStore();
 const { gradeFilter } = storeToRefs(store);
 
 // 2. 필터링할 등급 목록을 정의합니다. 'All'을 추가하여 전체보기를 구현합니다.
-const gradeOptions = ['All', 'HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'Mega'];
+const gradeOptions = ['All', 'HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'Mega', '완성품'];
 </script>
 
 <template>

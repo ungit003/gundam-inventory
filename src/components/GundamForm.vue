@@ -9,7 +9,7 @@ const store = useInventoryStore();
 
 // 2. [신규] 선택 가능한 등급 목록을 배열로 정의합니다.
 //    이렇게 데이터를 한곳에서 관리하면 나중에 등급을 추가하거나 수정하기 용이합니다.
-const gradeOptions = ['HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'Mega'];
+const gradeOptions = ['HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'Mega', '완성품'];
 
 // 3. [수정] 신규 건담 데이터를 위한 ref 객체를 정의합니다.
 //    - grade의 기본값을 'HG'로 설정하여, 처음부터 하나의 버튼이 선택된 상태로 시작합니다.

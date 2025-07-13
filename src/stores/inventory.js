@@ -3,13 +3,18 @@
 import { defineStore } from 'pinia';
 import * as XLSX from 'xlsx';
 
+// JSDoc을 사용해 데이터 타입을 명시적으로 정의하면, 코드 가독성과 안정성이 높아집니다.
 /**
  * @typedef {Object} GundamItem - 기본적인 건담 아이템의 타입 정의
  * @property {number} id - 고유 ID
  * @property {string} grade - 등급 (HG, MG 등)
  * @property {string} name - 이름
  * @property {number} quantity - 수량
- * @property {number} purchasePrice - 구매 가격
+ * @property {number | null} purchasePrice - 구매 가격
+ * @property {number | null} desiredSalePrice - 판매 희망 가격
+ * @property {string} purchaseLocation - 구매처
+ * @property {string} details - 상세 설명
+ * @property {string | null} imageUrl - 이미지 URL
  */
 
 /**
@@ -19,8 +24,8 @@ import * as XLSX from 'xlsx';
 // 'defineStore'를 사용하여 'inventory'라는 이름의 스토어를 정의합니다[1].
 export const useInventoryStore = defineStore('inventory', {
   // ----------------------------------------------------------------
-  // 1. state: 데이터의 중심. 기존의 gundams 배열 하나를 세 개로 분리합니다.
-  //    이제 모든 데이터는 이 세 개의 목록 중 하나에 속하게 됩니다.
+  // 1. state: 애플리케이션의 모든 데이터를 담는 중앙 저장소
+  //    '취미 자금' 관리 기능이 추가되고, 초기 데이터는 모두 비워둡니다.
   // ----------------------------------------------------------------
   state: () => ({
     /** @type {GundamItem[]} */
@@ -31,6 +36,12 @@ export const useInventoryStore = defineStore('inventory', {
 
     /** @type {SoldGundamItem[]} */
     soldList: [],      // 판매 완료 목록: 판매가 완료된 건담들
+
+    // 취미 자금 관리 객체
+    hobbyFund: {
+      balance: 0, // 현재 잔액
+      history: [], // 입출금 내역 [{ date, amount, reason }]
+    },
 
     // 검색어나 필터 같은 UI 상태도 여기에 함께 관리합니다.
     searchTerm: '',
@@ -49,11 +60,11 @@ export const useInventoryStore = defineStore('inventory', {
   }),
 
   // ----------------------------------------------------------------
-  // 2. getters: state를 기반으로 계산된 값을 제공합니다. (Vue의 computed와 유사)
-  //    기존 state 구조가 바뀌었으므로, getters도 그에 맞게 수정해야 합니다.
+  // 2. getters: state를 기반으로 계산된 값을 제공하는 부분 (읽기 전용)
+  //    새로운 금융 모델에 맞춰 대대적으로 수정 및 추가됩니다.
   // ----------------------------------------------------------------
   getters: {
-    // 이제 총 재고 수량은 '보관'과 '판매' 목록의 합계가 됩니다.
+    // 이제 총 재고 수량은 '보관'과 '판매' 목록의 합계가 됩니다. (추후 삭제)
     totalInStockCount: (state) => state.inStorageList.length + state.forSaleList.length,
 
     /**
@@ -116,6 +127,28 @@ export const useInventoryStore = defineStore('inventory', {
       // 판매 목록에서 해당 ID를 가진 아이템을 찾아 반환
       return state.forSaleList.find(item => item.id === state.itemIdToProcess);
     },
+
+    // [수정 및 이름 변경] '총 취미 투자금' -> '현재 재고 가치'
+    // 보관/판매 목록에 있는 아이템들의 총 구매 가격을 합산합니다.
+    currentStockValue: (state) => {
+      const allStock = [...state.inStorageList, ...state.forSaleList];
+      return allStock.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
+    },
+
+    // [신규] 판매 완료 목록의 총 판매 수익을 계산합니다.
+    // 이는 '취미 자금'의 잠재적 원천이 됩니다.
+    totalProfit: (state) => {
+      return state.soldList.reduce((sum, item) => {
+        const profit = (item.salePrice || 0) - (item.purchasePrice || 0);
+        return sum + profit;
+      }, 0);
+    },
+
+    // [신규] 총 자산을 계산합니다. (현재 재고 가치 + 현재 취미 자금 잔액)
+    totalAssets: (state) => {
+      // 다른 getter를 'this'를 통해 참조할 수 있습니다.
+      return this.currentStockValue + state.hobbyFund.balance;
+    },
   },
 
   // ----------------------------------------------------------------
@@ -132,16 +165,40 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     /**
-     * 신규 건담을 등록하는 액션입니다.
-     * 이제 새로운 건담은 기본적으로 '보관 목록(inStorageList)'에 추가됩니다.
-     * @param {Omit<GundamItem, 'id'>} gundamData - id가 없는 신규 건담 데이터
+     * [수정] 신규 건담 등록 시, 확장된 데이터 구조에 맞춰 추가 정보를 함께 받습니다.
+     * @param {Omit<GundamItem, 'id'>} gundamData - id를 제외한 모든 신규 건담 정보
      */
     addGundam(gundamData) {
       const newGundam = {
-        ...gundamData,
-        id: Date.now(), // 고유 ID 생성
+        id: Date.now(),
+        grade: gundamData.grade || 'N/A',
+        name: gundamData.name,
+        quantity: gundamData.quantity || 1,
+        purchasePrice: gundamData.purchasePrice || null,
+        // 새로운 필드들의 기본값을 설정합니다.
+        desiredSalePrice: gundamData.desiredSalePrice || null,
+        purchaseLocation: gundamData.purchaseLocation || '',
+        details: gundamData.details || '',
+        imageUrl: gundamData.imageUrl || null,
       };
       this.inStorageList.push(newGundam);
+    },
+
+    /**
+     * [신규] 취미 자금을 수동으로 조정하고, 그 내역을 기록하는 액션입니다.
+     * @param {object} adjustment - { amount: number, reason: string }
+     */
+    adjustHobbyFund(adjustment) {
+      if (!adjustment || typeof adjustment.amount !== 'number' || !adjustment.reason) {
+        alert('올바른 입출금 정보(금액, 사유)를 입력해주세요.');
+        return;
+      }
+      this.hobbyFund.balance += adjustment.amount;
+      this.hobbyFund.history.unshift({ // unshift를 사용해 최신 내역이 위로 오게 합니다.
+        date: new Date().toISOString(),
+        amount: adjustment.amount,
+        reason: adjustment.reason,
+      });
     },
 
     /**
@@ -272,7 +329,7 @@ export const useInventoryStore = defineStore('inventory', {
       // 4. 사용자에게 변경된 작업 흐름을 명확하게 안내합니다.
       alert(`'${newFileName}' 파일이 생성되었습니다. 이제부터 '현재 파일에 저장'을 사용하면 이 파일에 덮어쓰게 됩니다.`);
     },
-    
+
     /**
      * [신규/수정] 다중 시트를 가진 엑셀 파일을 읽어 각 목록 state를 채웁니다.
      * @param {File} file - 사용자가 업로드한 엑셀 파일
