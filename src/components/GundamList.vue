@@ -39,6 +39,11 @@ const store = useInventoryStore();
           <th>이름</th>
           <th>수량</th>
           <th>구매 가격</th>
+          <!-- '판매 목록'에만 '판매 희망가' 헤더를 보여줍니다. -->
+          <th v-if="listType === 'sale'">판매 희망가</th>
+          <!-- '보관'과 '판매' 목록에 '구매처' 헤더를 보여줍니다. -->
+          <th v-if="listType === 'storage' || listType === 'sale'">구매처</th>
+          
           <!-- '판매 완료' 목록일 때만 '판매 가격'과 '판매 매체' 헤더를 보여줍니다. -->
           <th v-if="listType === 'sold'">판매 가격</th>
           <th v-if="listType === 'sold'">판매 매체</th>
@@ -50,7 +55,7 @@ const store = useInventoryStore();
         <!-- 3. 목록이 비어있을 때 사용자에게 안내 메시지를 표시합니다. -->
         <tr v-if="items.length === 0">
           <!-- :colspan을 동적으로 계산하여 표의 전체 너비를 차지하게 합니다. -->
-          <td :colspan="listType === 'sold' ? 6 : 5" class="empty-list">
+          <td :colspan="listType === 'sold' ? 6 : (listType === 'sale' ? 7 : 6)" class="empty-list">
             해당 목록이 비어있습니다.
           </td>
         </tr>
@@ -65,6 +70,14 @@ const store = useInventoryStore();
           <!-- 5. 데이터 셀(td)도 헤더와 마찬가지로 listType에 따라 조건부로 렌더링합니다. -->
           <td v-if="listType === 'sold'">{{ item.salePrice ? `${item.salePrice.toLocaleString()} 원` : '미입력' }}</td>
           <td v-if="listType === 'sold'">{{ item.saleMedium || '미입력' }}</td>
+
+          <!-- 신규 데이터 셀 추가 -->
+          <td v-if="listType === 'sale'">
+            {{ item.desiredSalePrice ? `${item.desiredSalePrice.toLocaleString()} 원` : '미입력' }}
+          </td>
+          <td v-if="listType === 'storage' || listType === 'sale'">
+            {{ item.purchaseLocation || '미입력' }}
+          </td>
           
           <!-- '판매 완료' 목록이 아닐 때만 이 '관리' 열(td)을 보여줍니다. -->
           <td v-if="listType !== 'sold'">
@@ -91,6 +104,17 @@ const store = useInventoryStore();
           </td>
         </tr>
       </tbody>
+
+      <!-- '판매 목록'일 때만 표의 푸터(tfoot)를 보여줍니다. -->
+      <tfoot v-if="listType === 'sale'">
+        <tr>
+          <!-- colspan="6"으로 여러 셀을 하나로 합치고, 마지막 셀에 총액을 표시합니다. -->
+          <td colspan="6" class="summary-label">예상 판매 완료 총액</td>
+          <td class="summary-value">
+            {{ store.estimatedTotalSaleValue.toLocaleString() }} 원
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 </template>
@@ -145,4 +169,17 @@ th {
 .action-button.move { background-color: #3498db; }      /* 이동: 파란색 */
 .action-button.delete { background-color: #e74c3c; }    /* 삭제: 빨간색 */
 .action-button.complete { background-color: #2ecc71; }  /* 완료: 초록색 */
+
+tfoot {
+  font-weight: bold;
+  background-color: #f8f9fa;
+}
+.summary-label {
+  text-align: right;
+  padding-right: 1rem;
+}
+.summary-value {
+  color: #2ecc71; /* 초록색으로 강조 */
+  font-size: 1.1rem;
+}
 </style>

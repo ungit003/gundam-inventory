@@ -149,6 +149,16 @@ export const useInventoryStore = defineStore('inventory', {
       // 다른 getter를 'this'를 통해 참조할 수 있습니다.
       return this.currentStockValue + state.hobbyFund.balance;
     },
+
+    /**
+     * '판매 목록'에 있는 모든 아이템의 '판매 희망 가격'을 합산합니다.
+     * @param {object} state - 현재 스토어의 state
+     * @returns {number} - 계산된 예상 판매 완료 총액
+     */
+    estimatedTotalSaleValue: (state) => {
+      // reduce 메서드를 사용해 forSaleList 배열의 모든 아이템을 순회하며 값을 누적합니다.
+      return state.forSaleList.reduce((sum, item) => sum + (item.desiredSalePrice || 0), 0);
+    },
   },
 
   // ----------------------------------------------------------------

@@ -19,6 +19,8 @@ const newGundam = ref({
   name: '',
   quantity: 1,
   purchasePrice: null, // 숫자 입력을 위해 null로 초기화
+  desiredSalePrice: null, // [신규] 판매 희망가
+  purchaseLocation: '',   // [신규] 구매처
 });
 
 // 4. 폼 제출 시 실행될 함수입니다. (기존 로직과 거의 동일)
@@ -34,6 +36,8 @@ const handleSubmit = () => {
   // 이름과 구매 가격만 비우고, 등급과 수량은 기본값으로 유지합니다.
   newGundam.value.name = '';
   newGundam.value.purchasePrice = null;
+  newGundam.value.desiredSalePrice = null;
+  newGundam.value.purchaseLocation = '';
 };
 </script>
 
@@ -76,6 +80,26 @@ const handleSubmit = () => {
       <div class="form-group">
         <label for="gundam-price">구매 가격 (원)</label>
         <input id="gundam-price" type="number" placeholder="숫자만 입력" v-model.number="newGundam.purchasePrice">
+      </div>
+
+      <div class="form-group">
+        <label for="gundam-desired-price">판매 희망 가격 (원)</label>
+        <input 
+          id="gundam-desired-price" 
+          type="number" 
+          placeholder="판매를 원할 경우 입력" 
+          v-model.number="newGundam.desiredSalePrice"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="gundam-location">구매처</label>
+        <input 
+          id="gundam-location" 
+          type="text" 
+          placeholder="예: 건담베이스, 반다이몰" 
+          v-model="newGundam.purchaseLocation"
+        >
       </div>
 
       <div class="form-group submit-group">
