@@ -18,6 +18,7 @@ import HobbyFund from './components/HobbyFund.vue';
 // import FinancialDashboard from './components/FinancialDashboard.vue'; // HobbyFund에서 이름 변경
 
 import SaleConfirmModal from './components/SaleConfirmModal.vue';
+import ItemDetailModal from './components/ItemDetailModal.vue';
 
 // 2. Pinia 스토어를 사용 준비합니다.
 const store = useInventoryStore();
@@ -26,6 +27,8 @@ const store = useInventoryStore();
 const { 
   isSaleModalVisible,
   itemToSell,
+  isDetailModalVisible, 
+  itemForDetail,
   filteredInStorageList, 
   filteredForSaleList, 
   filteredSoldList 
@@ -61,11 +64,14 @@ const {
   </main>
 
   <!-- 
-    3. [신규] 모달 컴포넌트를 앱의 최상단에 배치합니다.
+    모달 컴포넌트를 앱의 최상단에 배치합니다.
     - v-if를 사용해 isSaleModalVisible이 true일 때만 모달이 화면에 나타나도록 합니다.
     - :item="itemToSell"을 통해 모달이 어떤 아이템 정보를 표시해야 할지 데이터를 전달합니다.
   -->
   <SaleConfirmModal v-if="isSaleModalVisible && itemToSell" :item="itemToSell" />
+
+  <!-- [신규] 상세 정보 모달을 조건부로 렌더링합니다. -->
+  <ItemDetailModal v-if="isDetailModalVisible && itemForDetail" :item="itemForDetail" />
 
   <footer>
     <!-- 저작권 푸터는 6단계에서 추가될 예정입니다. -->

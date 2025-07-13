@@ -60,7 +60,7 @@ const store = useInventoryStore();
           </td>
         </tr>
         <!-- 4. v-for를 사용해 부모로부터 받은 items 배열의 각 항목을 행(tr)으로 렌더링합니다. -->
-        <tr v-for="item in items" :key="item.id">
+        <tr v-for="item in items" :key="item.id" @click="store.openDetailModal(item.id)" class="clickable-row">
           <td>{{ item.grade }}</td>
           <td>{{ item.name }}</td>
           <td>{{ item.quantity }}</td>
@@ -181,5 +181,13 @@ tfoot {
 .summary-value {
   color: #2ecc71; /* 초록색으로 강조 */
   font-size: 1.1rem;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.clickable-row:hover {
+  background-color: #f5f5f5;
 }
 </style>

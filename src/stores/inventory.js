@@ -57,6 +57,10 @@ export const useInventoryStore = defineStore('inventory', {
 
     // 초기값은 null로, 아직 아무 파일도 불러오지 않았음을 의미합니다.
     loadedFileName: null,
+
+    // 상세 정보 모달의 상태를 관리하는 값들
+    isDetailModalVisible: false, // 상세 모달의 열림/닫힘 상태
+    itemIdForDetail: null,       // 상세 모달에서 보여줄 아이템의 ID
   }),
 
   // ----------------------------------------------------------------
@@ -158,6 +162,19 @@ export const useInventoryStore = defineStore('inventory', {
     estimatedTotalSaleValue: (state) => {
       // reduce 메서드를 사용해 forSaleList 배열의 모든 아이템을 순회하며 값을 누적합니다.
       return state.forSaleList.reduce((sum, item) => sum + (item.desiredSalePrice || 0), 0);
+    },
+
+    /**
+     * 상세 모달에 표시할 아이템 객체를 찾아 반환하는 getter입니다.
+     * 모든 목록을 검색하여 해당 ID를 가진 아이템을 찾습니다.
+     * @param {object} state - 현재 스토어의 state
+     * @returns {GundamItem | SoldGundamItem | null} - 찾은 아이템 객체 또는 null
+     */
+    itemForDetail: (state) => {
+      if (!state.itemIdForDetail) return null;
+      // 모든 목록을 하나의 배열로 합쳐서 검색합니다.
+      const allItems = [...state.inStorageList, ...state.forSaleList, ...state.soldList];
+      return allItems.find(item => item.id === state.itemIdForDetail) || null;
     },
   },
 
@@ -301,6 +318,62 @@ export const useInventoryStore = defineStore('inventory', {
       this.isSaleModalVisible = false; // 모달을 숨김
       this.itemIdToProcess = null;     // 처리할 아이템 ID 초기화
     },
+
+    /**
+     * [신규] 상세 모달에 표시할 아이템 객체를 찾아 반환하는 getter입니다.
+     * 모든 목록을 검색하여 해당 ID를 가진 아이템을 찾습니다.
+     * @param {object} state - 현재 스토어의 state
+     * @returns {GundamItem | SoldGundamItem | null} - 찾은 아이템 객체 또는 null
+     */
+    itemForDetail: (state) => {
+      if (!state.itemIdForDetail) return null;
+      // 모든 목록을 하나의 배열로 합쳐서 검색합니다.
+      const allItems = [...state.inStorageList, ...state.forSaleList, ...state.soldList];
+      return allItems.find(item => item.id === state.itemIdForDetail) || null;
+    },
+  },
+
+  actions: {
+    // ... 기존 actions (addGundam, adjustHobbyFund 등) ...
+
+    /**
+     * [신규] 상세 정보 모달을 여는 액션입니다.
+     * @param {number} gundamId - 상세 정보를 볼 건담의 ID
+     */
+    openDetailModal(gundamId) {
+      this.itemIdForDetail = gundamId;
+      this.isDetailModalVisible = true;
+    },
+
+    /**
+     * [신규] 상세 정보 모달을 닫는 액션입니다.
+     */
+    closeDetailModal() {
+      this.isDetailModalVisible = false;
+      this.itemIdForDetail = null;
+    },
+
+    /**
+     * [신규] 아이템의 상세 정보를 업데이트하는 액션입니다.
+     * @param {object} updatedData - 수정된 데이터 필드들을 담은 객체 (id 포함)
+     */
+    updateItemDetails(updatedData) {
+      const { id } = updatedData;
+      if (!id) return;
+
+      // 각 목록을 순회하며 해당 ID를 가진 아이템을 찾아 수정합니다.
+      const lists = [this.inStorageList, this.forSaleList, this.soldList];
+      for (const list of lists) {
+        const index = list.findIndex(item => item.id === id);
+        if (index !== -1) {
+          // Object.assign을 사용해 기존 아이템에 수정된 데이터만 덮어씁니다.
+          list[index] = { ...list[index], ...updatedData };
+          this.closeDetailModal(); // 수정 후 모달 닫기
+          return; // 아이템을 찾았으면 루프 종료
+        }
+      }
+    },
+    
     // ----------------------------------------------------------------
     // TODO: 아래 액션들은 8단계(다중 시트 엑셀)에서 다시 구현할 예정입니다.
     //       현재 데이터 구조와 맞지 않으므로, 우선 주석 처리하여 오류를 방지합니다.
