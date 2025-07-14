@@ -43,7 +43,7 @@ export const useInventoryStore = defineStore('inventory', {
     // UI 제어 및 필터링을 위한 상태
     searchTerm: '',       // 검색어
     gradeFilter: 'All',   // 등급 필터
-    loadedFileName: null, // 불러온 엑셀 파일 이름
+    // loadedFileName: null, // 불러온 엑셀 파일 이름
     
     // 모달(Modal) 창 제어를 위한 상태
     isSaleModalVisible: false,   // 판매 완료 모달 표시 여부
@@ -209,14 +209,40 @@ export const useInventoryStore = defineStore('inventory', {
         this.inStorageList.push(itemToMove);
       }
     },
+    /**
+   * 판매 완료 처리 시, 수익금을 계산하여 취미 자금에 자동으로 반영합니다.
+   * @param {number} gundamId - 판매 완료 처리할 건담의 ID
+   * @param {object} saleDetails - { salePrice, saleMedium } 판매 정보 객체
+   */
     markAsSold(gundamId, saleDetails) {
-      const index = this.forSaleList.findIndex(g => g.id === gundamId);
-      if (index !== -1) {
+        const index = this.forSaleList.findIndex(g => g.id === gundamId);
+        if (index !== -1) {
         const [itemToMove] = this.forSaleList.splice(index, 1);
-        const soldItem = { ...itemToMove, ...saleDetails };
+        
+        const soldItem = {
+            ...itemToMove,
+            ...saleDetails,
+        };
+        
         this.soldList.push(soldItem);
+
+        // --- [핵심 추가 로직] ---
+        // 1. 수익금을 계산합니다. (구매가가 없으면 0으로 처리)
+        const profit = (soldItem.salePrice || 0) - (soldItem.purchasePrice || 0);
+
+        // 2. 취미 자금 잔액에 수익금을 더합니다.
+        this.hobbyFund.balance += profit;
+        
+        // 3. 취미 자금 내역에 자동으로 기록을 추가합니다.
+        this.hobbyFund.history.unshift({
+            date: new Date().toISOString(),
+            amount: profit, // 실제 수익금을 기록
+            reason: `'${itemToMove.name}' 판매 수익금`, // 사유 자동 생성
+        });
+        // ------------------------
+        
         this.closeSaleModal();
-      }
+        }
     },
 
     // --- 자금 관리 Actions ---
@@ -234,6 +260,46 @@ export const useInventoryStore = defineStore('inventory', {
     },
     
     // --- 파일 관리 Actions ---
+    /**
+   * [신규/통합] 현재 모든 목록을 날짜와 시간 기반의 새 엑셀 파일로 저장합니다.
+   */
+    exportToExcel() {
+        if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
+        alert('저장할 데이터가 없습니다.');
+        return;
+        }
+
+        // --- [핵심] 파일명 생성 로직 (시/분/초 포함) ---
+        const now = new Date();
+        const year = now.getFullYear().toString().slice(-2);
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        
+        const dateTimeString = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+        
+        const fileName = `${dateTimeString}_gundam_inventory.xlsx`;
+        // 예시 파일명: 250714_213055_gundam_inventory.xlsx
+        // ---------------------------------------------------
+
+        // 엑셀 시트 생성 로직 (기존과 동일)
+        const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
+        const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
+        const wsSold = XLSX.utils.json_to_sheet(this.soldList);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, wsStorage, '보관목록');
+        XLSX.utils.book_append_sheet(workbook, wsSale, '판매목록');
+        XLSX.utils.book_append_sheet(workbook, wsSold, '판매완료');
+        
+        // 생성된 파일명으로 다운로드
+        XLSX.writeFile(workbook, fileName);
+
+        alert(`'${fileName}' 파일이 성공적으로 저장되었습니다.`);
+    },
+
     createExcel() {
       if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
         alert('저장할 데이터가 없습니다.'); return;
@@ -250,6 +316,7 @@ export const useInventoryStore = defineStore('inventory', {
       this.loadedFileName = newFileName;
       alert(`'${newFileName}' 파일이 생성되었습니다. 이제부터 '현재 파일에 저장'을 사용하면 이 파일에 덮어쓰게 됩니다.`);
     },
+
     async loadFromExcel(file) {
       try {
         const data = await file.arrayBuffer();
@@ -257,12 +324,13 @@ export const useInventoryStore = defineStore('inventory', {
         this.inStorageList = XLSX.utils.sheet_to_json(workbook.Sheets['보관목록'] || []);
         this.forSaleList = XLSX.utils.sheet_to_json(workbook.Sheets['판매목록'] || []);
         this.soldList = XLSX.utils.sheet_to_json(workbook.Sheets['판매완료'] || []);
-        this.loadedFileName = file.name;
+        // this.loadedFileName = file.name;
         alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.`);
       } catch (error) {
         alert('파일을 읽는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.');
       }
     },
+
     saveCurrentFile() {
       if (!this.loadedFileName) {
         alert('저장할 파일이 지정되지 않았습니다. 먼저 "파일 불러오기"를 통해 작업할 파일을 선택해주세요.'); return;
