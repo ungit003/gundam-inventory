@@ -2,9 +2,11 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { useInventoryStore } from '../stores/inventory';
+import { useInventoryStore } from '@/stores/inventoryStore';
+import { useUiStore } from '@/stores/uiStore';
 
-const store = useInventoryStore();
+const inventoryStore = useInventoryStore();
+const uiStore = useUiStore(); 
 
 // 1. 부모로부터 어떤 아이템을 처리할지 props로 전달받습니다.
 const props = defineProps({
@@ -27,7 +29,7 @@ const mediumOptions = ['당근마켓', '중고나라', '기타'];
 watch(() => props.item, (newItem) => {
   if (newItem) {
     saleData.value = {
-      salePrice: newItem.purchasePrice, // 구매 가격을 기본 판매 가격으로 제안
+      salePrice: newItem.desiredSalePrice || newItem.purchasePrice,
       saleMedium: '당근마켓',
     };
   }
@@ -40,18 +42,18 @@ const confirmSale = () => {
     return;
   }
   // 스토어의 markAsSold 액션을 호출하며, 아이템 ID와 함께 입력된 판매 정보를 전달합니다[12].
-  store.markAsSold(props.item.id, saleData.value);
+  inventoryStore.markAsSold(props.item.id, saleData.value);
 };
 </script>
 
 <template>
   <!-- 모달 배경 (어두운 반투명 레이어) -->
-  <div class="modal-backdrop" @click.self="store.closeSaleModal()">
+  <div class="modal-backdrop" @click.self="uiStore.closeSaleModal()">
     <!-- 실제 모달 콘텐츠 박스 -->
     <div class="modal-container">
       <div class="modal-header">
         <h3>'{{ item.name }}' 판매 정보 입력</h3>
-        <button @click="store.closeSaleModal()" class="close-button">&times;</button>
+        <button @click="uiStore.closeSaleModal()" class="close-button">&times;</button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="confirmSale">
@@ -70,7 +72,7 @@ const confirmSale = () => {
         </form>
       </div>
       <div class="modal-footer">
-        <button @click="store.closeSaleModal()" class="button secondary">취소</button>
+        <button @click="uiStore.closeSaleModal()" class="button secondary">취소</button>
         <button @click="confirmSale" class="button primary">판매 완료 처리</button>
       </div>
     </div>

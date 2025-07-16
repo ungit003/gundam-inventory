@@ -2,13 +2,14 @@
 
 <script setup>
 import { storeToRefs } from 'pinia';
-import { useInventoryStore } from '../stores/inventory';
+// [수정] uiStore를 가져옵니다.
+import { useUiStore } from '../stores/uiStore';
 import { GRADE_OPTIONS } from '../config.js';
 
-const store = useInventoryStore();
+const uiStore = useUiStore();
 
-// 1. 스토어의 gradeFilter 상태를 가져와 UI와 연결합니다.
-const { gradeFilter } = storeToRefs(store);
+// uiStore에서 필터 관련 상태를 가져옵니다.
+const { gradeFilter, searchTerm } = storeToRefs(uiStore);
 
 // 2. 필터링할 등급 목록을 정의합니다. 'All'을 추가하여 전체보기를 구현합니다.
 const filterGradeOptions = ['All', ...GRADE_OPTIONS];
@@ -26,7 +27,7 @@ const filterGradeOptions = ['All', ...GRADE_OPTIONS];
       <button
         v-for="grade in filterGradeOptions"
         :key="grade"
-        @click="store.setGradeFilter(grade)"
+        @click="uiStore.setGradeFilter(grade)"
         :class="{ active: gradeFilter === grade }"
         class="filter-button"
       >
@@ -41,7 +42,7 @@ const filterGradeOptions = ['All', ...GRADE_OPTIONS];
       -->
       <input
         type="text"
-        v-model="store.searchTerm"
+        v-model="uiStore.searchTerm"
         placeholder="이름, 등급, 구매처, 설명 등으로 검색..."
         class="search-input"
       >
