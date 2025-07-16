@@ -3,10 +3,10 @@
 <script setup>
 // 1. 필요한 Vue 기능(ref)과 Pinia 스토어를 가져옵니다.
 import { ref } from 'vue';
-import { useInventoryStore } from '../stores/inventory';
+import { useInventoryStore } from '../stores/inventoryStore';
 import { GRADE_OPTIONS } from '../config.js';
 
-const store = useInventoryStore();
+const inventoryStore = useInventoryStore();
 
 // 하드 코딩 내역 삭제
 // const gradeOptions = ['HG', 'RG', 'MG', 'PG', 'SD', 'RE/100', 'Hi-RM', 'Mega', '완성품'];
@@ -30,7 +30,7 @@ const handleSubmit = () => {
     return;
   }
   // store의 addGundam 액션을 호출하여 중앙 저장소에 데이터를 추가합니다.
-  store.addGundam(newGundam.value);
+  inventoryStore.addGundam(newGundam.value);
 
   // 폼 제출 후, 다음 입력을 위해 입력 필드를 초기화합니다.
   // 이름과 구매 가격만 비우고, 등급과 수량은 기본값으로 유지합니다.

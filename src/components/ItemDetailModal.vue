@@ -2,9 +2,11 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { useInventoryStore } from '../stores/inventory';
+import { useInventoryStore } from '@/stores/inventoryStore';
+import { useUiStore } from '@/stores/uiStore';
 
-const store = useInventoryStore();
+const inventoryStore = useInventoryStore();
+const uiStore = useUiStore();
 
 // 1. 부모로부터 수정할 아이템 객체를 props로 전달받습니다.
 const props = defineProps({
@@ -27,24 +29,25 @@ watch(() => props.item, (newItem) => {
 // '저장' 버튼 클릭 시 실행될 함수
 const saveChanges = () => {
   // 스토어의 updateItemDetails 액션을 호출하여 변경된 데이터를 저장합니다.
-  store.updateItemDetails(localItem.value);
+  inventoryStore.updateItemDetails(localItem.value);
+  uiStore.closeDetailModal();
 };
 
 const deleteItem = () => {
   if (confirm(`'${props.item.name}' 항목을 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
-    store.deleteGundam(props.item.id);
+    inventoryStore.deleteGundam(props.item.id);
     // 삭제 후에는 모달을 닫아야 하므로, closeDetailModal도 호출합니다.
-    store.closeDetailModal();
+    uiStore.closeDetailModal();
   }
 };
 </script>
 
 <template>
-  <div class="modal-backdrop" @click.self="store.closeDetailModal()">
+  <div class="modal-backdrop" @click.self="uiStore.closeDetailModal()">
     <div class="modal-container">
       <div class="modal-header">
         <h3>'{{ localItem.name }}' 상세 정보</h3>
-        <button @click="store.closeDetailModal()" class="close-button">&times;</button>
+        <button @click="uiStore.closeDetailModal()" class="close-button">&times;</button>
       </div>
       <div class="modal-body">
         <!-- 이미지 미리보기 -->
@@ -88,7 +91,7 @@ const deleteItem = () => {
       </div>
       <div class="modal-footer">
         <button @click="deleteItem" class="button delete">삭제</button>
-        <button @click="store.closeDetailModal()" class="button secondary">취소</button>
+        <button @click="uiStore.closeDetailModal()" class="button secondary">취소</button>
         <button @click="saveChanges" class="button primary">저장</button>
       </div>
     </div>

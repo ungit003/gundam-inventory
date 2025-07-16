@@ -1,87 +1,99 @@
 <!-- src/App.vue -->
 
 <script setup>
-// 1. 필요한 함수와 컴포넌트, 스토어를 가져옵니다.
+import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useInventoryStore } from './stores/inventory';
 
-// 우리가 만든 재사용 가능한 목록 컴포넌트를 가져옵니다.
+// 필요한 모든 전문 스토어를 가져옵니다.
+import { useInventoryStore } from './stores/inventoryStore';
+import { useUiStore } from './stores/uiStore';
+
+// 필요한 모든 자식 컴포넌트를 가져옵니다.
 import CollapsibleSection from './components/CollapsibleSection.vue';
-import GundamList from './components/GundamList.vue';
-
-// 다른 컴포넌트들도 추후 사용을 위해 미리 import 해둡니다.
+import FinancialDashboard from './components/FinancialDashboard.vue';
 import GundamForm from './components/GundamForm.vue';
 import FileUpload from './components/FileUpload.vue';
-
 import FilterControls from './components/FilterControls.vue';
-import FinancialDashboard from './components/FinancialDashboard.vue'; // HobbyFund에서 이름 변경
-
+import GundamList from './components/GundamList.vue';
 import SaleConfirmModal from './components/SaleConfirmModal.vue';
 import ItemDetailModal from './components/ItemDetailModal.vue';
 
-// 2. Pinia 스토어를 사용 준비합니다.
-const store = useInventoryStore();
+// 각 스토어의 인스턴스를 생성합니다.
+const inventoryStore = useInventoryStore();
+const uiStore = useUiStore();
 
-// 3. storeToRefs를 사용하여 스토어의 state를 반응성을 유지한 채로 가져옵니다.
+// --- [핵심] 데이터 가져오기 단순화 ---
+// App.vue는 더 이상 '어떻게' 필터링하는지 알 필요가 없습니다.
+// inventoryStore가 알아서 필터링하여 제공하는 '최종 결과물(getter)'만 가져옵니다.
 const { 
-  isSaleModalVisible,
-  itemToSell,
-  isDetailModalVisible, 
-  itemForDetail,
   filteredInStorageList, 
   filteredForSaleList, 
   filteredSoldList 
-} = storeToRefs(store);
+} = storeToRefs(inventoryStore);
+
+// uiStore에서는 모달을 제어하기 위한 상태만 가져옵니다.
+const { isSaleModalVisible, isDetailModalVisible } = storeToRefs(uiStore);
+
+// --- [삭제] ---
+// App.vue에 있던 복잡한 필터링 헬퍼 함수와 computed 속성들은 모두 제거되었습니다.
+// 이로 인해 App.vue의 코드가 훨씬 간결하고 명확해졌습니다.
+
+// 모달에 전달할 데이터를 계산하는 computed는 그대로 유지합니다.
+// 이는 UI 상태(ID)와 재고 데이터(객체)를 조합해야 하므로,
+// 지휘자인 App.vue가 담당하는 것이 합리적입니다.
+const itemToSell = computed(() => {
+  return uiStore.itemIdToProcess 
+    ? inventoryStore.forSaleList.find(item => item.id === uiStore.itemIdToProcess) 
+    : null;
+});
+const itemForDetail = computed(() => inventoryStore.itemForDetail(uiStore.itemIdForDetail));
+
 </script>
 
 <template>
-  <header>
-    <h1>건담 재고 관리 v2.0</h1>
-  </header>
-  <main>
-    <!-- [수정] 각 기능 구역을 CollapsibleSection으로 감쌉니다. -->
-    
-    <CollapsibleSection title="종합 자산 현황">
-      <!-- <slot> 영역에 들어갈 내용입니다. -->
-      <FinancialDashboard />
-    </CollapsibleSection>
+  <div class="app-wrapper">
+    <header>
+      <h1>건담 재고 관리 v3.0 (Refactored)</h1>
+    </header>
+    <main>
+      <!-- 자식 컴포넌트들을 조립하는 부분은 변경할 필요가 없습니다. -->
+      <!-- :items에 이미 필터링이 완료된 최종 목록을 전달합니다. -->
+      <CollapsibleSection title="종합 자산 현황">
+        <FinancialDashboard />
+      </CollapsibleSection>
 
-    <CollapsibleSection title="신규 등록 및 파일 관리">
-      <!-- <slot> 영역에 여러 컴포넌트를 함께 넣을 수도 있습니다. -->
-      <GundamForm />
-      <hr class="divider">
-      <FileUpload />
-    </CollapsibleSection>
+      <CollapsibleSection title="신규 등록 및 파일 관리">
+        <GundamForm />
+        <hr class="divider">
+        <FileUpload />
+      </CollapsibleSection>
 
-    <CollapsibleSection title="재고 목록 및 필터">
-      <FilterControls />
-      <hr class="divider">
-      <GundamList title="판매 목록" :items="filteredForSaleList" listType="sale" />
-      <GundamList title="보관 목록" :items="filteredInStorageList" listType="storage" />
-      <GundamList title="판매 완료 목록" :items="filteredSoldList" listType="sold" />
-    </CollapsibleSection>
-  </main>
+      <CollapsibleSection title="재고 목록 및 필터">
+        <FilterControls />
+        <hr class="divider">
+        <GundamList title="판매 목록" :items="filteredForSaleList" listType="sale" />
+        <GundamList title="보관 목록" :items="filteredInStorageList" listType="storage" />
+        <GundamList title="판매 완료 목록" :items="filteredSoldList" listType="sold" />
+      </CollapsibleSection>
+    </main>
 
-  <!-- 
-    모달 컴포넌트를 앱의 최상단에 배치합니다.
-    - v-if를 사용해 isSaleModalVisible이 true일 때만 모달이 화면에 나타나도록 합니다.
-    - :item="itemToSell"을 통해 모달이 어떤 아이템 정보를 표시해야 할지 데이터를 전달합니다.
-  -->
-  <SaleConfirmModal v-if="isSaleModalVisible && itemToSell" :item="itemToSell" />
+    <!-- 모달 렌더링 부분도 변경할 필요가 없습니다. -->
+    <SaleConfirmModal v-if="isSaleModalVisible && itemToSell" :item="itemToSell" />
+    <ItemDetailModal v-if="isDetailModalVisible && itemForDetail" :item="itemForDetail" />
 
-  <!-- [신규] 상세 정보 모달을 조건부로 렌더링합니다. -->
-  <ItemDetailModal v-if="isDetailModalVisible && itemForDetail" :item="itemForDetail" />
-
-  <footer class="app-footer">
-    <p>&copy; 2024 Your Name or Company. All Rights Reserved.</p>
-    <p>
-      이 애플리케이션은 개인 포트폴리오 목적으로 제작되었습니다.
-      <a href="https://github.com/your-repo-link" target="_blank">GitHub Repository</a>
-    </p>
-  </footer>
+    <footer class="app-footer">
+      <p>&copy; 2024 Your Name. All Rights Reserved.</p>
+    </footer>
+  </div>
 </template>
 
 <style scoped>
+/* App.vue의 스타일은 변경할 필요가 없습니다. */
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 header {
   background-color: #41B883;
   color: white;
@@ -89,24 +101,16 @@ header {
   text-align: center;
 }
 main {
-  max-width: 960px; /* 더 넓은 화면을 위해 너비 조정 */
+  flex-grow: 1;
+  max-width: 1024px;
   margin: 0 auto;
   padding: 1rem;
+  width: 100%;
 }
 .divider {
   margin: 2rem 0;
   border: 0;
   border-top: 1px solid #eee;
-}
-
-.app-wrapper {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh; /* 화면 전체 높이를 차지하도록 */
-}
-main {
-  flex-grow: 1; /* main 영역이 남은 공간을 모두 차지하도록 */
-  /* ... 기존 main 스타일 ... */
 }
 .app-footer {
   text-align: center;
@@ -114,12 +118,5 @@ main {
   background-color: #343a40;
   color: #adb5bd;
   font-size: 0.9rem;
-}
-.app-footer a {
-  color: #ffffff;
-  text-decoration: none;
-}
-.app-footer a:hover {
-  text-decoration: underline;
 }
 </style>

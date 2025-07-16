@@ -3,12 +3,13 @@
 <script setup>
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useInventoryStore } from '../stores/inventory';
+// [수정] 이제 financialStore만 가져옵니다.
+import { useFinancialStore } from '../stores/financialStore';
 
-const store = useInventoryStore();
+const financialStore = useFinancialStore();
 
-// 1. [수정] 스토어에서 새로운 금융 관련 getter들을 모두 가져옵니다.
-const { currentStockValue, totalProfit, totalAssets, hobbyFund } = storeToRefs(store);
+// financialStore에서 필요한 getter와 state를 가져옵니다.
+const { currentStockValue, totalProfit, totalAssets, hobbyFund } = storeToRefs(financialStore);
 
 // 2. [신규] 자금 수동 조정을 위한 로컬 상태를 정의합니다.
 const adjustment = ref({
@@ -18,7 +19,7 @@ const adjustment = ref({
 
 // 3. [신규] 자금 조정 폼을 제출할 때 실행될 함수입니다.
 const handleAdjustment = () => {
-  store.adjustHobbyFund(adjustment.value);
+  financialStore.adjustHobbyFund(adjustment.value);
   // 제출 후 폼 초기화
   adjustment.value = { amount: null, reason: '' };
 };
