@@ -96,7 +96,22 @@ export const useInventoryStore = defineStore('inventory', {
   actions: {
     // --- 데이터 조작 Actions ---
     addGundam(gundamData) {
-      const newGundam = { id: Date.now(), ...gundamData };
+      const newGundam = {
+        id: Date.now(),
+        grade: gundamData.grade || 'N/A',
+        name: gundamData.name,
+        quantity: gundamData.quantity || 1,
+        purchasePrice: gundamData.purchasePrice || null,
+        desiredSalePrice: gundamData.desiredSalePrice || null,
+        purchaseLocation: gundamData.purchaseLocation || '',
+        details: gundamData.details || '',
+        imageUrl: gundamData.imageUrl || null,
+        // --- [핵심 추가] ---
+        // 새로운 필드들의 기본값을 null로 설정합니다.
+        shippingCost: null,
+        otherFees: null,
+        // -------------------
+      };
       this.inStorageList.push(newGundam);
     },
     updateItemDetails(updatedData) {
