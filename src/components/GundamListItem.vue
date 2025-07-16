@@ -75,7 +75,11 @@ const props = defineProps({
           <span>{{ props.item.salePrice ? `${props.item.salePrice.toLocaleString()} 원` : '미입력' }}</span>
           <span class="sale-medium">({{ props.item.saleMedium || '미지정' }})</span>
         </div>
-        <button @click.stop="inventoryStore.deleteGundam(props.item.id)" class="action-button delete mini">삭제</button>
+        <!-- '판매 취소' 버튼 -->
+        <div class="button-group-sold">
+          <button @click.stop="inventoryStore.revertSale(props.item.id)" class="action-button revert">되돌리기</button>
+          <button @click.stop="inventoryStore.deleteGundam(props.item.id)" class="action-button delete mini">삭제</button>
+        </div>
       </div>
     </td>
   </tr>
@@ -115,4 +119,19 @@ const props = defineProps({
 .action-button.delete { background-color: #e74c3c; }
 .action-button.complete { background-color: #2ecc71; }
 .action-button.mini { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
+
+.sale-info-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* 판매 완료 목록의 버튼들을 위한 작은 그룹 */
+.button-group-sold {
+  display: flex;
+  gap: 0.5rem;
+}
+/* 되돌리기 버튼 스타일 추가 */
+.action-button.revert {
+  background-color: #f39c12; /* 주황색 계열 */
+}
 </style>
