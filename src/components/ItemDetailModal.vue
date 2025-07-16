@@ -75,6 +75,22 @@ const deleteItem = () => {
               <input type="number" v-model.number="localItem.desiredSalePrice">
             </div>
           </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>배송비</label>
+              <!--
+                v-model.number 수식어는 사용자 입력을 숫자로 자동 변환해줍니다.
+                입력하지 않으면 null이 되도록 처리됩니다.
+              -->
+              <input type="number" placeholder="원" v-model.number="localItem.shippingCost">
+            </div>
+            <div class="form-group">
+              <label>기타 수수료</label>
+              <input type="number" placeholder="원" v-model.number="localItem.otherFees">
+            </div>
+          </div>
+          
           <div class="form-group">
             <label>구매처</label>
             <input type="text" v-model="localItem.purchaseLocation">
@@ -87,6 +103,7 @@ const deleteItem = () => {
             <label>상세 설명</label>
             <textarea rows="4" v-model="localItem.details"></textarea>
           </div>
+
         </form>
       </div>
       <div class="modal-footer">

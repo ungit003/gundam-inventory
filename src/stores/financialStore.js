@@ -16,6 +16,8 @@ import { useInventoryStore } from './inventoryStore';
  * @property {string} purchaseLocation
  * @property {string} details
  * @property {string | null} imageUrl
+ * @property {number | null} shippingCost - 배송비 (구매 또는 판매 시 발생)
+ * @property {number | null} otherFees - 기타 수수료 (플랫폼 수수료 등)
  */
 /**
  * @typedef {GundamItem & { salePrice: number; saleMedium: string; }} SoldGundamItem
