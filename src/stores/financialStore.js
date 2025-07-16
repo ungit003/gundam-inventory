@@ -85,5 +85,24 @@ export const useFinancialStore = defineStore('financial', {
         reason: `'${soldItem.name}' 판매 수익금`,
       });
     },
+
+    /**
+     * '판매 취소' 시, 발생했던 수익금을 회수하고 내역을 기록하는 액션입니다.
+     * @param {SoldGundamItem} revertedItem - 판매가 취소된 아이템 객체
+     */
+    revertSaleProfit(revertedItem) {
+      // 1. 취소된 아이템의 순수익을 계산합니다. (1-1단계에서 추가한 부대비용을 포함할 수 있습니다)
+      const profitToRevert = (revertedItem.salePrice || 0) - (revertedItem.purchasePrice || 0);
+
+      // 2. 현재 취미 자금 잔액에서 해당 수익금을 차감합니다.
+      this.hobbyFund.balance -= profitToRevert;
+
+      // 3. 취미 자금 내역에 '판매 취소' 기록을 추가합니다.
+      this.hobbyFund.history.unshift({
+        date: new Date().toISOString(),
+        amount: -profitToRevert, // 차감된 금액이므로 음수로 기록합니다.
+        reason: `'${revertedItem.name}' 판매 취소`,
+      });
+    },
   },
 });

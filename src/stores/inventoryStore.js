@@ -244,5 +244,33 @@ export const useInventoryStore = defineStore('inventory', {
         alert("파일을 읽는 중 오류가 발생했습니다. 파일 형식이 올바른지 확인해주세요.");
       }
     },
+
+    /**
+     * '판매 취소'를 처리하는 메인 액션입니다.
+     * @param {number} soldItemId - 판매를 취소할 아이템의 ID
+     */
+    revertSale(soldItemId) {
+      // 협력할 financialStore의 인스턴스를 가져옵니다.
+      const financialStore = useFinancialStore();
+
+      // 1. '판매 완료' 목록에서 해당 아이템을 찾습니다.
+      const index = this.soldList.findIndex(item => item.id === soldItemId);
+      if (index !== -1) {
+        // 2. splice를 사용해 목록에서 아이템을 제거하고, 그 아이템을 반환받습니다.
+        const [itemToRevert] = this.soldList.splice(index, 1);
+
+        // 3. 되돌릴 아이템에서 판매 관련 정보(salePrice, saleMedium)를 제거하여
+        //    깨끗한 '판매 목록' 아이템으로 만듭니다.
+        //    (나머지 속성들은 그대로 유지됩니다)
+        const { salePrice, saleMedium, ...revertedItem } = itemToRevert;
+
+        // 4. 깨끗해진 아이템을 '판매 목록'에 다시 추가합니다.
+        this.forSaleList.push(revertedItem);
+
+        // 5. 금융 전문가(financialStore)에게, 원래의 판매 정보가 담긴 아이템을 전달하여
+        //    수익 취소 기록을 처리하도록 위임(호출)합니다.
+        financialStore.revertSaleProfit(itemToRevert);
+      }
+    },
   },
 });
