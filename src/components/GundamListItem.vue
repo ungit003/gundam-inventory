@@ -25,6 +25,40 @@ const props = defineProps({
     required: true,
   }
 });
+
+/**
+ * 아이템 정보를 클립보드에 복사하는 함수입니다.
+ * 비동기(async) 함수로 작성해야 navigator.clipboard API를 안정적으로 사용할 수 있습니다.
+ */
+const copyToClipboard = async () => {
+  // 1. 복사할 텍스트 템플릿을 정의합니다.
+  //    - props.item에서 필요한 정보를 가져와 조합합니다.
+  //    - 가격 정보가 없을 경우를 대비해 '가격 미정'과 같은 대체 텍스트를 사용합니다.
+  const item = props.item;
+  const salePrice = item.desiredSalePrice 
+    ? `${item.desiredSalePrice.toLocaleString()}원` 
+    : '가격 미정';
+
+  const textToCopy = `
+[제품명] ${item.name}
+[등급] ${item.grade}
+[판매 희망가] ${salePrice}
+[상세 설명] ${item.details || '상세 설명 없음'}
+  `.trim(); // trim()은 앞뒤의 불필요한 공백을 제거합니다.
+
+  try {
+    // 2. 브라우저의 Clipboard API를 사용하여 텍스트를 클립보드에 복사합니다.
+    await navigator.clipboard.writeText(textToCopy);
+    
+    // 3. 사용자에게 성공 피드백을 제공합니다. (alert 대신 더 나은 UI를 사용할 수도 있습니다.)
+    alert('판매 정보가 클립보드에 복사되었습니다.');
+
+  } catch (err) {
+    // 4. 복사에 실패했을 경우(예: 오래된 브라우저, 보안 설정 등) 에러를 처리합니다.
+    console.error('클립보드 복사 실패:', err);
+    alert('클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+  }
+};
 </script>
 
 <template>
@@ -64,6 +98,7 @@ const props = defineProps({
       
       <!-- (상황 2) '판매 목록'일 때의 관리 버튼 -->
       <div v-else-if="props.listType === 'sale'" class="button-group">
+        <button @click.stop="copyToClipboard" class="action-button copy">내용 복사</button>
         <button @click.stop="inventoryStore.moveToStorage(props.item.id)" class="action-button move">보관 목록으로</button>
         <!-- 판매 완료 버튼은 UI 모달을 여는 것이므로 uiStore의 액션을 호출합니다. -->
         <button @click.stop="uiStore.openSaleModal(props.item.id)" class="action-button complete">판매 완료</button>
@@ -119,6 +154,9 @@ const props = defineProps({
 .action-button.delete { background-color: #e74c3c; }
 .action-button.complete { background-color: #2ecc71; }
 .action-button.mini { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
+.action-button.copy {
+  background-color: #8e44ad; /* 보라색 계열 */
+}
 
 .sale-info-group {
   display: flex;
