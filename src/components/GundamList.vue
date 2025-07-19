@@ -10,7 +10,7 @@ import GundamListItem from './GundamListItem.vue';
 const financialStore = useFinancialStore();
 
 // 부모(App.vue)로부터 받을 props 정의는 이전과 동일합니다.
-defineProps({
+const props = defineProps({
   title: { type: String, required: true },
   items: { type: Array, required: true },
   listType: { type: String, required: true },
@@ -63,7 +63,7 @@ ${allItemsText}
       <!-- '판매 목록'일 때만 '전체 복사' 버튼을 보여줍니다. -->
       <button 
         v-if="listType === 'sale'" 
-        @click="copySalesListToClipboard" 
+        @click.stop="copySalesListToClipboard" 
         class="copy-all-button"
       >
         목록 전체 복사
