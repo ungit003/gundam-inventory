@@ -15,11 +15,60 @@ defineProps({
   items: { type: Array, required: true },
   listType: { type: String, required: true },
 });
+
+/**
+ * '판매 목록' 전체를 클립보드에 복사하는 함수입니다.
+ */
+const copySalesListToClipboard = async () => {
+  // 1. 목록이 비어있으면 사용자에게 알리고 함수를 종료합니다.
+  if (props.items.length === 0) {
+    alert('복사할 판매 목록이 없습니다.');
+    return;
+  }
+
+  // 2. map을 사용해 각 아이템을 정해진 형식의 문자열로 변환합니다.
+  const allItemsText = props.items.map(item => {
+    const salePrice = item.desiredSalePrice 
+      ? `${item.desiredSalePrice.toLocaleString()}원` 
+      : '가격 미정';
+    // 각 아이템 정보를 하나의 문자열 덩어리로 만듭니다.
+    return `[제품명] ${item.name} / [등급] ${item.grade} / [판매 희망가] ${salePrice}`;
+  }).join('\n'); // 3. join('\n')을 사용해 각 아이템 문자열을 줄바꿈으로 연결합니다.
+
+  // 4. 최종적으로 만들어진 전체 텍스트 블록을 정의합니다.
+  const textToCopy = `
+== 건담 판매 목록 ==
+${allItemsText}
+
+[상세 설명]
+(여기에 공통 상세 설명을 입력하세요)
+  `.trim();
+
+  try {
+    // 5. Clipboard API를 사용하여 전체 텍스트를 클립보드에 복사합니다.
+    await navigator.clipboard.writeText(textToCopy);
+    alert('판매 목록 전체가 클립보드에 복사되었습니다.');
+  } catch (err) {
+    console.error('클립보드 복사 실패:', err);
+    alert('클립보드 복사에 실패했습니다.');
+  }
+};
 </script>
 
 <template>
   <div class="list-section">
     <h2>{{ title }} (총 {{ items.length }}개)</h2>
+    <div class="list-header">
+      <h2>{{ title }} (총 {{ items.length }}개)</h2>
+      <!-- '판매 목록'일 때만 '전체 복사' 버튼을 보여줍니다. -->
+      <button 
+        v-if="listType === 'sale'" 
+        @click="copySalesListToClipboard" 
+        class="copy-all-button"
+      >
+        목록 전체 복사
+      </button>
+    </div>
     <table>
       <!-- [역할 2: 테이블 구조 정의] -->
       <!-- 테이블의 전체적인 구조(헤더, 푸터)를 정의하는 것은 여전히 매니저의 역할입니다. -->
@@ -80,6 +129,20 @@ defineProps({
 */
 .list-section {
   margin-bottom: 2.5rem;
+}
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.copy-all-button {
+  border: none;
+  padding: 0.5rem 1rem;
+  background-color: #8e44ad; /* 보라색 계열 */
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 table {
   width: 100%;
