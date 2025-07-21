@@ -1,7 +1,6 @@
 // src/stores/financialStore.js
 
 import { defineStore } from 'pinia';
-// inventoryStore의 데이터를 참조해야 하므로 가져옵니다.
 import { useInventoryStore } from './inventoryStore';
 
 // 다른 파일에서도 이 타입을 참조할 수 있도록 export 합니다.
@@ -58,6 +57,22 @@ export const useFinancialStore = defineStore('financial', {
      */
     totalAssets(state) {
       return state.hobbyFund.balance + this.currentStockValue;
+    },
+    /**
+     * [신규] '보관 목록'에 있는 모든 아이템의 '구매 가격'을 합산합니다.
+     * @returns {number} - 계산된 보관 목록 총 구매 가격
+     */
+    inStorageTotalPurchaseValue: () => {
+      const inventoryStore = useInventoryStore();
+      return inventoryStore.inStorageList.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
+    },
+    /**
+     * [신규] '판매 완료 목록'에 있는 모든 아이템의 '실제 판매 가격'을 합산합니다.
+     * @returns {number} - 계산된 판매 완료 목록 총 판매 가격
+     */
+    soldTotalSaleValue: () => {
+      const inventoryStore = useInventoryStore();
+      return inventoryStore.soldList.reduce((sum, item) => sum + (item.salePrice || 0), 0);
     },
   },
 

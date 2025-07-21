@@ -118,6 +118,26 @@ ${allItemsText}
           </td>
         </tr>
       </tfoot>
+
+      <tfoot v-if="listType === 'storage'">
+        <tr>
+          <!-- '보관 목록'일 때의 colspan은 5입니다. -->
+          <td colspan="5" class="summary-label">보관 목록 총 구매가</td>
+          <td class="summary-value">
+            {{ financialStore.inStorageTotalPurchaseValue.toLocaleString() }} 원
+          </td>
+        </tr>
+      </tfoot>
+
+      <tfoot v-if="listType === 'sold'">
+        <tr>
+          <!-- '판매 완료' 목록일 때의 colspan은 4입니다. -->
+          <td colspan="4" class="summary-label">총 판매액</td>
+          <td class="summary-value">
+            {{ financialStore.soldTotalSaleValue.toLocaleString() }} 원
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 </template>
