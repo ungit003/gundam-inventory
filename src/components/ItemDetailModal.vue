@@ -4,6 +4,7 @@
 import { ref, watch } from 'vue';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useUiStore } from '@/stores/uiStore';
+import { GRADE_OPTIONS } from '../config';
 
 const inventoryStore = useInventoryStore();
 const uiStore = useUiStore();
@@ -64,8 +65,27 @@ const deleteItem = () => {
             </div>
             <div class="form-group">
               <label>등급</label>
-              <input type="text" v-model="localItem.grade">
+              <!-- 기존의 <input type="text">를 아래의 버튼 그룹으로 교체합니다. -->
+              <div class="grade-buttons">
+                <!--
+                  - v-for를 사용해 GRADE_OPTIONS 배열의 각 등급을 버튼으로 만듭니다.
+                  - @click="localItem.grade = grade": 버튼 클릭 시, localItem의 등급을 해당 버튼의 등급으로 변경합니다.
+                  - :class="{ 'active': ... }": 현재 localItem의 등급과 버튼의 등급이 일치하면 'active' 클래스를 추가하여 시각적으로 선택되었음을 표시합니다.
+                -->
+                <button
+                  v-for="grade in GRADE_OPTIONS"
+                  :key="grade"
+                  type="button"
+                  @click="localItem.grade = grade"
+                  :class="{ 'active': localItem.grade === grade }"
+                >
+                  {{ grade }}
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div class="form-grid">
             <div class="form-group">
               <label>구매 가격</label>
               <input type="number" v-model.number="localItem.purchasePrice">
@@ -184,5 +204,25 @@ const deleteItem = () => {
 .button.delete {
   background-color: #e74c3c;
   color: white;
+}
+
+.grade-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+.grade-buttons button {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.grade-buttons button.active {
+  background-color: #41B883;
+  color: white;
+  border-color: #41B883;
 }
 </style>
