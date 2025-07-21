@@ -4,6 +4,7 @@
 import { ref, watch } from 'vue';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useUiStore } from '@/stores/uiStore';
+import { SALE_MEDIUM_OPTIONS } from '../config';
 
 const inventoryStore = useInventoryStore();
 const uiStore = useUiStore(); 
@@ -19,7 +20,7 @@ const props = defineProps({
 // 2. 모달 내의 폼 입력을 위한 로컬 상태(ref)를 정의합니다.
 const saleData = ref({
   salePrice: null,
-  saleMedium: '당근마켓',
+  saleMedium: SALE_MEDIUM_OPTIONS[0] || '기타',
 });
 
 // 3. '판매 매체' 선택 옵션을 정의합니다.
@@ -29,11 +30,19 @@ const mediumOptions = ['당근마켓', '중고나라', '기타'];
 watch(() => props.item, (newItem) => {
   if (newItem) {
     saleData.value = {
+      // 1. '판매 희망가'(desiredSalePrice)가 있으면 그것을 기본값으로 사용합니다.
+      // 2. '||' 연산자를 사용해, 만약 판매 희망가가 없거나 0이면(falsy),
+      //    차선책으로 '구매 가격'(purchasePrice)을 사용합니다.
       salePrice: newItem.desiredSalePrice || newItem.purchasePrice,
-      saleMedium: '당근마켓',
+      
+      // 판매 매체의 기본값은 그대로 유지합니다.
+      saleMedium: SALE_MEDIUM_OPTIONS[0] || '기타',
     };
   }
-}, { immediate: true }); // 컴포넌트가 처음 마운트될 때도 실행
+}, { 
+  immediate: true, // 컴포넌트가 처음 마운트될 때도 즉시 실행
+  deep: true,      // props.item 객체 내부의 변화도 감지
+}); // 컴포넌트가 처음 마운트될 때도 실행
 
 // 5. '확인' 버튼을 눌렀을 때 실행될 함수입니다.
 const confirmSale = () => {
