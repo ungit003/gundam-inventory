@@ -17,10 +17,12 @@ import FilterControls from './components/FilterControls.vue';
 import GundamList from './components/GundamList.vue';
 import SaleConfirmModal from './components/SaleConfirmModal.vue';
 import ItemDetailModal from './components/ItemDetailModal.vue';
+import BaseModal from './components/BaseModal.vue';
 
 // 각 스토어의 인스턴스를 생성합니다.
 const inventoryStore = useInventoryStore();
 const uiStore = useUiStore();
+const { isAlertModalVisible, alertModal } = storeToRefs(uiStore);
 
 // --- [핵심] 데이터 가져오기 단순화 ---
 // App.vue는 더 이상 '어떻게' 필터링하는지 알 필요가 없습니다.
@@ -78,6 +80,20 @@ const itemForDetail = computed(() => inventoryStore.itemForDetail(uiStore.itemId
     </main>
 
     <!-- 모달 렌더링 부분도 변경할 필요가 없습니다. -->
+     <BaseModal :show="isAlertModalVisible" @close="uiStore.closeAlert()">
+      <template #header>
+        <h3>{{ alertModal.title }}</h3>
+      </template>
+      <template #body>
+        <p v-html="alertModal.message.replace(/\n/g, '<br>')"></p>
+      </template>
+      <template #footer>
+        <!-- isConfirm이 true(Confirm 모달)일 때만 '취소' 버튼이 보입니다. -->
+        <button v-if="alertModal.isConfirm" @click="uiStore.closeAlert()" class="button secondary">취소</button>
+        <!-- isConfirm이 false(Alert 모달)이면 이 버튼이 '확인' 역할을 합니다. -->
+        <button @click="alertModal.isConfirm ? uiStore.handleConfirm() : uiStore.closeAlert()" class="button primary">확인</button>
+      </template>
+    </BaseModal>
     <SaleConfirmModal v-if="isSaleModalVisible && itemToSell" :item="itemToSell" />
     <ItemDetailModal v-if="isDetailModalVisible && itemForDetail" :item="itemForDetail" />
 

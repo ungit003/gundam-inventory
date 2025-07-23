@@ -181,7 +181,8 @@ export const useInventoryStore = defineStore('inventory', {
       const uiStore = useUiStore();
 
       if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
-        alert('저장할 데이터가 없습니다.'); return;
+        uiStore.showAlert({ title: '알림', message: '저장할 데이터가 없습니다.' });
+        return;
       }
       
       let baseFileName; // 사용자가 입력한 '기본 이름'을 저장할 변수
@@ -201,7 +202,7 @@ export const useInventoryStore = defineStore('inventory', {
       if (!baseFileName) {
         const userInput = prompt("저장할 파일의 기본 이름을 입력하세요 (예: my_gundams):");
         if (!userInput || userInput.trim() === '') {
-          alert('파일 저장이 취소되었습니다.');
+          uiStore.showAlert({ title: '취소', message: '파일 저장이 취소되었습니다.' });
           return;
         }
         baseFileName = userInput.trim();
@@ -236,10 +237,13 @@ export const useInventoryStore = defineStore('inventory', {
         // --- 저장 후, 현재 작업 파일명 자동 설정 ---
         uiStore.setCurrentBaseFileName(baseFileName);
         
-        alert(`'${finalFileName}' 파일이 성공적으로 저장되었습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
+        uiStore.showAlert({
+          title: '저장 성공',
+          message: `'${finalFileName}' 파일이 성공적으로 저장되었습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`
+        });
       } catch (error) {
         console.error("엑셀 저장 중 오류:", error);
-        alert("엑셀 파일을 저장하는 도중 오류가 발생했습니다.");
+        uiStore.showAlert({ title: '오류', message: '엑셀 파일을 저장하는 도중 오류가 발생했습니다.' });
       }
     },
 
@@ -281,10 +285,13 @@ export const useInventoryStore = defineStore('inventory', {
         const baseFileName = parts.length > 2 ? parts.slice(2).join('_') : fileNameWithoutExt;
         uiStore.setCurrentBaseFileName(baseFileName);
           
-        alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
+        uiStore.showAlert({
+          title: '불러오기 성공',
+          message: `'${file.name}' 파일을 성공적으로 불러왔습니다.\n현재 작업 파일이 '${baseFileName}'(으)로 설정됩니다.`
+        });
       } catch (error) {
         console.error("엑셀 불러오기 중 오류:", error);
-        alert("파일을 읽는 중 오류가 발생했습니다. 파일 형식이 올바른지 확인해주세요.");
+        uiStore.showAlert({ title: '오류', message: '파일을 읽는 중 오류가 발생했습니다. 파일 형식이 올바른지 확인해주세요.' });
       }
     },
 

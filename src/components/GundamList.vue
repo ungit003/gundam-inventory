@@ -4,10 +4,12 @@
 // [역할 1: 스토어 및 컴포넌트 연결]
 // 이 컴포넌트는 이제 '예상 판매 완료 총액'을 표시하기 위해 financialStore만 알면 됩니다.
 import { useFinancialStore } from '../stores/financialStore';
+import { useUiStore } from '../stores/uiStore'; // [추가] uiStore를 가져옵니다.
 // 방금 만든 전문 직원 컴포넌트, GundamListItem을 가져옵니다.
 import GundamListItem from './GundamListItem.vue';
 
 const financialStore = useFinancialStore();
+const uiStore = useUiStore(); // [추가] uiStore 인스턴스를 생성합니다.
 
 // 부모(App.vue)로부터 받을 props 정의는 이전과 동일합니다.
 const props = defineProps({
@@ -22,7 +24,7 @@ const props = defineProps({
 const copySalesListToClipboard = async () => {
   // 1. 목록이 비어있으면 사용자에게 알리고 함수를 종료합니다.
   if (props.items.length === 0) {
-    alert('복사할 판매 목록이 없습니다.');
+    uiStore.showAlert({ title: '알림', message: '복사할 판매 목록이 없습니다.' });
     return;
   }
 
@@ -47,10 +49,10 @@ ${allItemsText}
   try {
     // 5. Clipboard API를 사용하여 전체 텍스트를 클립보드에 복사합니다.
     await navigator.clipboard.writeText(textToCopy);
-    alert('판매 목록 전체가 클립보드에 복사되었습니다.');
+    uiStore.showAlert({ title: '복사 완료', message: '판매 목록 전체가 클립보드에 복사되었습니다.' });
   } catch (err) {
     console.error('클립보드 복사 실패:', err);
-    alert('클립보드 복사에 실패했습니다.');
+    uiStore.showAlert({ title: '복사 실패', message: '클립보드 복사에 실패했습니다.' });;
   }
 };
 </script>

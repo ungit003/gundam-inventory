@@ -15,6 +15,13 @@ export const useUiStore = defineStore('ui', {
     isDetailModalVisible: false,
     itemIdForDetail: null,
     currentBaseFileName: null, 
+    isAlertModalVisible: false,
+    alertModal: {
+      title: '',
+      message: '',
+      isConfirm: false, // false이면 Alert, true이면 Confirm
+      onConfirm: null,  // '확인'을 눌렀을 때 실행될 콜백 함수
+    },
   }),
   
   // v3.0에서는 getter 대신 컴포넌트에서 직접 state를 참조하는 것이 더 명확할 수 있습니다.
@@ -49,6 +56,32 @@ export const useUiStore = defineStore('ui', {
      */
     setCurrentBaseFileName(name) {
       this.currentBaseFileName = name;
+    },
+
+    /** Alert 모달 열기 */
+    showAlert({ title, message }) {
+      this.alertModal = { title, message, isConfirm: false, onConfirm: null };
+      this.isAlertModalVisible = true;
+    },
+
+    /** Confirm 모달 열기 */
+    showConfirm({ title, message, onConfirm }) {
+      this.alertModal = { title, message, isConfirm: true, onConfirm };
+      this.isAlertModalVisible = true;
+    },
+
+    /** Alert/Confirm 모달 닫기 */
+    closeAlert() {
+      this.isAlertModalVisible = false;
+      this.alertModal.onConfirm = null;
+    },
+
+    /** Confirm 모달의 '확인' 버튼 처리 */
+    handleConfirm() {
+      if (typeof this.alertModal.onConfirm === 'function') {
+        this.alertModal.onConfirm();
+      }
+      this.closeAlert();
     },
   },
 });
