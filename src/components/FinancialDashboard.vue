@@ -3,12 +3,13 @@
 <script setup>
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useInventoryStore } from '../stores/inventory';
+// [수정] 이제 financialStore만 가져옵니다.
+import { useFinancialStore } from '../stores/financialStore';
 
-const store = useInventoryStore();
+const financialStore = useFinancialStore();
 
-// 1. [수정] 스토어에서 새로운 금융 관련 getter들을 모두 가져옵니다.
-const { currentStockValue, totalProfit, totalAssets, hobbyFund } = storeToRefs(store);
+// financialStore에서 필요한 getter와 state를 가져옵니다.
+const { currentStockValue, totalProfit, totalAssets, hobbyFund } = storeToRefs(financialStore);
 
 // 2. [신규] 자금 수동 조정을 위한 로컬 상태를 정의합니다.
 const adjustment = ref({
@@ -18,9 +19,15 @@ const adjustment = ref({
 
 // 3. [신규] 자금 조정 폼을 제출할 때 실행될 함수입니다.
 const handleAdjustment = () => {
-  store.adjustHobbyFund(adjustment.value);
+  financialStore.adjustHobbyFund(adjustment.value);
   // 제출 후 폼 초기화
   adjustment.value = { amount: null, reason: '' };
+};
+
+// 날짜 형식을 'YYYY.MM.DD' 형태로 변환해주는 헬퍼 함수입니다.
+const formatDate = (isoString) => {
+  if (!isoString) return '';
+  return new Date(isoString).toLocaleDateString('ko-KR');
 };
 </script>
 
@@ -56,7 +63,39 @@ const handleAdjustment = () => {
       </form>
     </div>
     
-    <!-- TODO: 자금 내역(history)을 보여주는 기능은 추후 추가할 수 있습니다. -->
+    <!-- 자금 내역 섹션 -->
+     <div class="history-section">
+      <h4>취미 자금 내역</h4>
+      <!-- 내역이 없을 경우 안내 메시지를 표시합니다. -->
+      <div v-if="!hobbyFund.history || hobbyFund.history.length === 0" class="no-history">
+        거래 내역이 없습니다.
+      </div>
+      <!-- 내역이 있을 경우 테이블을 렌더링합니다. -->
+      <table v-else class="history-table">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>사유</th>
+            <th>구분</th>
+            <th>금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- v-for를 사용해 history 배열의 각 항목을 행으로 렌더링합니다. -->
+          <tr v-for="(entry, index) in hobbyFund.history" :key="index">
+            <td>{{ formatDate(entry.date) }}</td>
+            <td>{{ entry.reason }}</td>
+            <td>
+              <!-- 금액이 0보다 크면 '입금', 작으면 '출금'으로 표시합니다. -->
+              <span :class="entry.amount >= 0 ? 'deposit' : 'withdrawal'">
+                {{ entry.amount >= 0 ? '입금' : '출금' }}
+              </span>
+            </td>
+            <td>{{ Math.abs(entry.amount).toLocaleString() }} 원</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -115,5 +154,44 @@ const handleAdjustment = () => {
   color: white;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.history-section {
+  margin-top: 2.5rem;
+}
+.history-section h4 {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+.no-history {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.history-table th, .history-table td {
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: middle;
+}
+.history-table th {
+  background-color: #f9f9f9;
+}
+/* 금액의 성격(입금/출금)에 따라 다른 색상을 적용합니다. */
+.deposit {
+  color: #2ecc71; /* 초록색 */
+  font-weight: bold;
+}
+.withdrawal {
+  color: #e74c3c; /* 빨간색 */
+  font-weight: bold;
 }
 </style>

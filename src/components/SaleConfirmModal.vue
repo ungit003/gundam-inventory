@@ -2,9 +2,12 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { useInventoryStore } from '../stores/inventory';
+import { useInventoryStore } from '@/stores/inventoryStore';
+import { useUiStore } from '@/stores/uiStore';
+import { SALE_MEDIUM_OPTIONS } from '../config';
 
-const store = useInventoryStore();
+const inventoryStore = useInventoryStore();
+const uiStore = useUiStore(); 
 
 // 1. 부모로부터 어떤 아이템을 처리할지 props로 전달받습니다.
 const props = defineProps({
@@ -17,21 +20,26 @@ const props = defineProps({
 // 2. 모달 내의 폼 입력을 위한 로컬 상태(ref)를 정의합니다.
 const saleData = ref({
   salePrice: null,
-  saleMedium: '당근마켓',
+  saleMedium: SALE_MEDIUM_OPTIONS[0] || '기타',
 });
-
-// 3. '판매 매체' 선택 옵션을 정의합니다.
-const mediumOptions = ['당근마켓', '중고나라', '기타'];
 
 // 4. 모달이 열릴 때마다(props.item이 바뀔 때마다) 폼을 초기화하기 위한 로직입니다.
 watch(() => props.item, (newItem) => {
   if (newItem) {
     saleData.value = {
-      salePrice: newItem.purchasePrice, // 구매 가격을 기본 판매 가격으로 제안
-      saleMedium: '당근마켓',
+      // 1. '판매 희망가'(desiredSalePrice)가 있으면 그것을 기본값으로 사용합니다.
+      // 2. '||' 연산자를 사용해, 만약 판매 희망가가 없거나 0이면(falsy),
+      //    차선책으로 '구매 가격'(purchasePrice)을 사용합니다.
+      salePrice: newItem.desiredSalePrice || newItem.purchasePrice,
+      
+      // 판매 매체의 기본값은 그대로 유지합니다.
+      saleMedium: SALE_MEDIUM_OPTIONS[0] || '기타',
     };
   }
-}, { immediate: true }); // 컴포넌트가 처음 마운트될 때도 실행
+}, { 
+  immediate: true, // 컴포넌트가 처음 마운트될 때도 즉시 실행
+  deep: true,      // props.item 객체 내부의 변화도 감지
+}); // 컴포넌트가 처음 마운트될 때도 실행
 
 // 5. '확인' 버튼을 눌렀을 때 실행될 함수입니다.
 const confirmSale = () => {
@@ -40,18 +48,18 @@ const confirmSale = () => {
     return;
   }
   // 스토어의 markAsSold 액션을 호출하며, 아이템 ID와 함께 입력된 판매 정보를 전달합니다[12].
-  store.markAsSold(props.item.id, saleData.value);
+  inventoryStore.markAsSold(props.item.id, saleData.value);
 };
 </script>
 
 <template>
   <!-- 모달 배경 (어두운 반투명 레이어) -->
-  <div class="modal-backdrop" @click.self="store.closeSaleModal()">
+  <div class="modal-backdrop" @click.self="uiStore.closeSaleModal()">
     <!-- 실제 모달 콘텐츠 박스 -->
     <div class="modal-container">
       <div class="modal-header">
         <h3>'{{ item.name }}' 판매 정보 입력</h3>
-        <button @click="store.closeSaleModal()" class="close-button">&times;</button>
+        <button @click="uiStore.closeSaleModal()" class="close-button">&times;</button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="confirmSale">
@@ -62,7 +70,7 @@ const confirmSale = () => {
           <div class="form-group">
             <label for="sale-medium">판매 매체</label>
             <select id="sale-medium" v-model="saleData.saleMedium">
-              <option v-for="option in mediumOptions" :key="option" :value="option">
+              <option v-for="option in SALE_MEDIUM_OPTIONS" :key="option" :value="option">
                 {{ option }}
               </option>
             </select>
@@ -70,7 +78,7 @@ const confirmSale = () => {
         </form>
       </div>
       <div class="modal-footer">
-        <button @click="store.closeSaleModal()" class="button secondary">취소</button>
+        <button @click="uiStore.closeSaleModal()" class="button secondary">취소</button>
         <button @click="confirmSale" class="button primary">판매 완료 처리</button>
       </div>
     </div>
