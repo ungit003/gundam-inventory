@@ -44,10 +44,17 @@ const saveChanges = () => {
 };
 
 const deleteItem = () => {
-  if (confirm(`'${props.item.name}' 항목을 정말로 삭제하시겠습니까?`)) {
-    inventoryStore.deleteGundam(props.item.id);
-    uiStore.closeDetailModal();
-  }
+  // [핵심 수정] 기존 if(confirm(...)) 블록을 uiStore.showConfirm 호출로 대체합니다.
+  uiStore.showConfirm({
+    title: '삭제 확인',
+    message: `'${props.item.name}' 항목을 정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+    
+    // onConfirm: 사용자가 모달의 '확인' 버튼을 눌렀을 때 실행될 함수를 전달합니다.
+    onConfirm: () => { 
+      inventoryStore.deleteGundam(props.item.id);
+      uiStore.closeDetailModal();
+    }
+  });
 };
 
 const addImageUrlField = () => localItem.value.imageUrls.push('');
