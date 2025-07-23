@@ -19,13 +19,27 @@ const props = defineProps({
 
 // 2. props로 받은 데이터를 직접 수정하는 것은 좋지 않으므로,
 //    수정을 위한 로컬 복사본(localItem)을 만듭니다.
-const localItem = ref({});
+const localItem = ref({ imageUrls: [] }); // 기본값으로 빈 배열을 갖도록 초기화
 
 // 3. props.item이 변경될 때마다(모달이 새로 열릴 때마다) 로컬 복사본을 업데이트합니다.
 watch(() => props.item, (newItem) => {
-  // 깊은 복사(...)를 통해 원본 데이터에 영향을 주지 않도록 합니다.
-  localItem.value = { ...newItem };
+  if (newItem) {
+    localItem.value = { ...newItem };
+    // imageUrls가 배열이 아니면(이전 데이터 호환성), 안전하게 빈 배열로 만듭니다.
+    if (!Array.isArray(localItem.value.imageUrls)) {
+      localItem.value.imageUrls = [];
+    }
+  }
 }, { immediate: true, deep: true });
+
+// 이미지 URL 입력 필드를 추가하는 함수
+const addImageUrlField = () => {
+  localItem.value.imageUrls.push(''); // 빈 문자열을 추가하여 새 입력 필드를 생성
+};
+// 이미지 URL 입력 필드를 삭제하는 함수
+const removeImageUrlField = (index) => {
+  localItem.value.imageUrls.splice(index, 1); // 특정 인덱스의 요소를 제거
+};
 
 // '저장' 버튼 클릭 시 실행될 함수
 const saveChanges = () => {
@@ -117,7 +131,18 @@ const deleteItem = () => {
           </div>
           <div class="form-group">
             <label>이미지 URL</label>
-            <input type="text" placeholder="https://..." v-model="localItem.imageUrl">
+            <!-- v-for를 사용해 imageUrls 배열의 각 URL을 입력 필드로 렌더링합니다. -->
+            <div v-for="(url, index) in localItem.imageUrls" :key="index" class="image-url-group">
+              <input 
+                type="text" 
+                placeholder="https://..." 
+                v-model="localItem.imageUrls[index]"
+              >
+              <!-- 각 입력 필드 옆에 삭제 버튼을 추가합니다. -->
+              <button type="button" @click="removeImageUrlField(index)" class="remove-button">&times;</button>
+            </div>
+            <!-- 새 입력 필드를 추가하는 버튼입니다. -->
+            <button type="button" @click="addImageUrlField" class="add-button">이미지 URL 추가</button>
           </div>
           <div class="form-group">
             <label>상세 설명</label>
@@ -225,4 +250,23 @@ const deleteItem = () => {
   color: white;
   border-color: #41B883;
 }
+
+.image-url-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.image-url-group input {
+  flex-grow: 1; /* 입력 필드가 남은 공간을 모두 차지하도록 */
+}
+.remove-button, .add-button {
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  padding: 0.5rem;
+  line-height: 1;
+}
+.remove-button { color: #e74c3c; }
+.add-button { width: 100%; margin-top: 0.5rem; }
 </style>

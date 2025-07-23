@@ -105,7 +105,7 @@ export const useInventoryStore = defineStore('inventory', {
         desiredSalePrice: gundamData.desiredSalePrice || null,
         purchaseLocation: gundamData.purchaseLocation || '',
         details: gundamData.details || '',
-        imageUrl: gundamData.imageUrl || null,
+        imageUrls: [], 
         // --- [핵심 추가] ---
         // 새로운 필드들의 기본값을 null로 설정합니다.
         shippingCost: null,
@@ -187,6 +187,12 @@ export const useInventoryStore = defineStore('inventory', {
         const dateTimeString = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
         const fileName = `${dateTimeString}_gundam_inventory.xlsx`;
 
+        const stringifyImageUrls = (list) => 
+        list.map(item => ({
+          ...item,
+          imageUrls: JSON.stringify(item.imageUrls || []), // 배열이 없으면 빈 배열로 처리
+        }));
+        
         const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
         const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
         const wsSold = XLSX.utils.json_to_sheet(this.soldList);
