@@ -14,7 +14,7 @@ import { useInventoryStore } from './inventoryStore';
  * @property {number | null} desiredSalePrice
  * @property {string} purchaseLocation
  * @property {string} details
- * @property {string | null} imageUrl
+ * @property {string[]} imageUrls - 이미지 URL들을 담을 문자열 배열
  * @property {number | null} shippingCost - 배송비 (구매 또는 판매 시 발생)
  * @property {number | null} otherFees - 기타 수수료 (플랫폼 수수료 등)
  */
