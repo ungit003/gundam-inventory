@@ -23,9 +23,6 @@ const saleData = ref({
   saleMedium: SALE_MEDIUM_OPTIONS[0] || '기타',
 });
 
-// 3. '판매 매체' 선택 옵션을 정의합니다.
-const mediumOptions = ['당근마켓', '중고나라', '기타'];
-
 // 4. 모달이 열릴 때마다(props.item이 바뀔 때마다) 폼을 초기화하기 위한 로직입니다.
 watch(() => props.item, (newItem) => {
   if (newItem) {
@@ -73,7 +70,7 @@ const confirmSale = () => {
           <div class="form-group">
             <label for="sale-medium">판매 매체</label>
             <select id="sale-medium" v-model="saleData.saleMedium">
-              <option v-for="option in mediumOptions" :key="option" :value="option">
+              <option v-for="option in SALE_MEDIUM_OPTIONS" :key="option" :value="option">
                 {{ option }}
               </option>
             </select>

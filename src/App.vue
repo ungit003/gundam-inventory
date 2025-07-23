@@ -55,7 +55,7 @@ const itemForDetail = computed(() => inventoryStore.itemForDetail(uiStore.itemId
 <template>
   <div class="app-wrapper">
     <header>
-      <h1>건담 재고 관리 v2.0 (Refactored)</h1>
+      <h1>건담 재고 관리 v3.0)</h1>
     </header>
     <main>
       <!-- 자식 컴포넌트들을 조립하는 부분은 변경할 필요가 없습니다. -->
