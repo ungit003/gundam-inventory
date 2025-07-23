@@ -245,6 +245,7 @@ export const useInventoryStore = defineStore('inventory', {
 
     async loadFromExcel(file) {
       const financialStore = useFinancialStore();
+      const uiStore = useUiStore();
       try {
         const data = await file.arrayBuffer();
         const workbook = XLSX.read(data);
@@ -271,10 +272,13 @@ export const useInventoryStore = defineStore('inventory', {
           history: historyData,
         };
 
-        // 파일 불러오기 성공 시, 파일 이름에서 확장자를 제거하여 '기본 이름'으로 설정합니다.
-        // 예: "250723_163000_my_gundams.xlsx" -> "250723_163000_my_gundams"
-        const uiStore = useUiStore();
-        const baseFileName = file.name.replace(/\.xlsx$/i, ''); // 정규식을 사용하여 .xlsx 확장자 제거
+        // 파일명에서 날짜_시간_ 접두사를 제거하여 순수한 '기본 이름'만 추출합니다.
+        // 예: "250723_163000_my_gundams.xlsx" -> "my_gundams"
+        const fileNameWithoutExt = file.name.replace(/\.xlsx$/i, '');
+        const parts = fileNameWithoutExt.split('_');
+        // 파일명이 '날짜_시간_기본이름' 형식이면, 2번째 인덱스부터 끝까지가 기본 이름입니다.
+        // 그렇지 않으면, 그냥 확장자만 제거한 이름을 사용합니다.
+        const baseFileName = parts.length > 2 ? parts.slice(2).join('_') : fileNameWithoutExt;
         uiStore.setCurrentBaseFileName(baseFileName);
           
         alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
