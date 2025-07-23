@@ -2,32 +2,29 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { useInventoryStore } from '@/stores/inventoryStore';
-import { useUiStore } from '@/stores/uiStore';
+import { useInventoryStore } from '../stores/inventoryStore';
+import { useUiStore } from '../stores/uiStore';
 import { GRADE_OPTIONS } from '../config';
 
 const inventoryStore = useInventoryStore();
 const uiStore = useUiStore();
 
-// 1. 부모로부터 수정할 아이템 객체를 props로 전달받습니다.
 const props = defineProps({
-  item: {
-    type: Object,
-    required: true,
-  },
+  item: { type: Object, required: true },
 });
 
-// localItem을 빈 객체로 시작하되, imageUrls는 빈 배열로 명시적으로 초기화합니다.
+// 모든 로컬 상태를 명확하게 정의합니다.
 const localItem = ref({ imageUrls: [] });
 const currentImageIndex = ref(0);
 
 /**
- * [핵심 수정 1] props.item이 변경될 때마다 로컬 상태를 리셋하는 Watcher
+ * [최종 수정] props.item이 변경될 때마다 로컬 상태를 리셋하는 Watcher
  */
 watch(() => props.item, (newItem) => {
   if (newItem) {
-    // structuredClone을 사용하여 원본 prop 객체로부터 완전히 분리된 깊은 복사본을 만듭니다.
-    localItem.value = structuredClone(newItem);
+    // [핵심] JSON.parse(JSON.stringify(...))를 사용해 완벽하고 안전한 깊은 복사본을 만듭니다.
+    // 이 방법은 Proxy 객체를 순수한 JS 객체로 변환하여 복사하므로, structuredClone 오류가 발생하지 않습니다.
+    localItem.value = JSON.parse(JSON.stringify(newItem));
 
     // imageUrls가 배열이 아니면 (이전 데이터와의 호환성을 위해) 빈 배열로 초기화합니다.
     if (!Array.isArray(localItem.value.imageUrls)) {
@@ -36,21 +33,25 @@ watch(() => props.item, (newItem) => {
     // 모달이 열릴 때마다 이미지 인덱스를 첫 번째 이미지(0)로 재설정합니다.
     currentImageIndex.value = 0;
   }
-}, {
-  immediate: true, // 컴포넌트가 처음 마운트될 때 watch 콜백을 즉시 실행합니다.
-  deep: true,      // props.item 객체 내부의 변경 사항도 감지합니다.
+}, { 
+  immediate: true,
 });
 
-// --- 현재 표시할 이미지 URL을 계산하는 computed 속성 ---
-const currentImageUrl = computed(() => {
-  // localItem.value.imageUrls 배열이 비어있지 않고, 현재 인덱스가 유효한 경우
-  if (localItem.value.imageUrls && localItem.value.imageUrls.length > 0) {
-    // 해당 인덱스의 URL을 반환합니다.
-    return localItem.value.imageUrls[currentImageIndex.value];
+// --- 모든 이벤트 핸들러를 명확하게 정의합니다 ---
+const saveChanges = () => {
+  inventoryStore.updateItemDetails(localItem.value);
+  uiStore.closeDetailModal();
+};
+
+const deleteItem = () => {
+  if (confirm(`'${props.item.name}' 항목을 정말로 삭제하시겠습니까?`)) {
+    inventoryStore.deleteGundam(props.item.id);
+    uiStore.closeDetailModal();
   }
-  // 이미지가 없으면 null을 반환합니다.
-  return null;
-});
+};
+
+const addImageUrlField = () => localItem.value.imageUrls.push('');
+const removeImageUrlField = (index) => localItem.value.imageUrls.splice(index, 1);
 
 const showNextImage = () => {
   const count = localItem.value.imageUrls.length;
@@ -62,30 +63,6 @@ const showPrevImage = () => {
   const count = localItem.value.imageUrls.length;
   if (count > 0) {
     currentImageIndex.value = (currentImageIndex.value - 1 + count) % count;
-  }
-};
-
-// 이미지 URL 입력 필드를 추가하는 함수
-const addImageUrlField = () => {
-  localItem.value.imageUrls.push(''); // 빈 문자열을 추가하여 새 입력 필드를 생성
-};
-// 이미지 URL 입력 필드를 삭제하는 함수
-const removeImageUrlField = (index) => {
-  localItem.value.imageUrls.splice(index, 1); // 특정 인덱스의 요소를 제거
-};
-
-// '저장' 버튼 클릭 시 실행될 함수
-const saveChanges = () => {
-  // 스토어의 updateItemDetails 액션을 호출하여 변경된 데이터를 저장합니다.
-  inventoryStore.updateItemDetails(localItem.value);
-  uiStore.closeDetailModal();
-};
-
-const deleteItem = () => {
-  if (confirm(`'${props.item.name}' 항목을 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
-    inventoryStore.deleteGundam(props.item.id);
-    // 삭제 후에는 모달을 닫아야 하므로, closeDetailModal도 호출합니다.
-    uiStore.closeDetailModal();
   }
 };
 </script>
