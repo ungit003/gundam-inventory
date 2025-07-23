@@ -57,7 +57,6 @@ ${allItemsText}
 
 <template>
   <div class="list-section">
-    <h2>{{ title }} (총 {{ items.length }}개)</h2>
     <div class="list-header">
       <h2>{{ title }} (총 {{ items.length }}개)</h2>
       <!-- '판매 목록'일 때만 '전체 복사' 버튼을 보여줍니다. -->

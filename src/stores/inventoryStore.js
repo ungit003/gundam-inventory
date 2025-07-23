@@ -196,7 +196,11 @@ export const useInventoryStore = defineStore('inventory', {
         const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
         const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
         const wsSold = XLSX.utils.json_to_sheet(this.soldList);
-        
+        const wsFundSummary = XLSX.utils.json_to_sheet([{
+          '현재 취미 자금 잔액': financialStore.hobbyFund.balance
+        }]);
+        const wsFundHistory = XLSX.utils.json_to_sheet(financialStore.hobbyFund.history);
+          
         const fundDataToSave = {
           ...financialStore.hobbyFund,
           history: JSON.stringify(financialStore.hobbyFund.history, null, 2),
@@ -207,7 +211,8 @@ export const useInventoryStore = defineStore('inventory', {
         XLSX.utils.book_append_sheet(workbook, wsStorage, '보관목록');
         XLSX.utils.book_append_sheet(workbook, wsSale, '판매목록');
         XLSX.utils.book_append_sheet(workbook, wsSold, '판매완료');
-        XLSX.utils.book_append_sheet(workbook, wsFund, '취미자금내역');
+        XLSX.utils.book_append_sheet(workbook, wsFundSummary, '자금요약');
+        XLSX.utils.book_append_sheet(workbook, wsFundHistory, '취미자금내역');
         
         XLSX.writeFile(workbook, fileName);
         alert(`'${fileName}' 파일이 성공적으로 저장되었습니다.`);
@@ -230,19 +235,20 @@ export const useInventoryStore = defineStore('inventory', {
         const soldSheet = workbook.Sheets['판매완료'];
         this.soldList = soldSheet ? XLSX.utils.sheet_to_json(soldSheet) : [];
         
-        const fundSheet = workbook.Sheets['취미자금내역'];
-        if (fundSheet) {
-          const fundData = XLSX.utils.sheet_to_json(fundSheet);
-          if (fundData.length > 0) {
-            const loadedFundData = fundData[0];
-            if (loadedFundData.history && typeof loadedFundData.history === 'string') {
-              loadedFundData.history = JSON.parse(loadedFundData.history);
-            }
-            financialStore.hobbyFund = loadedFundData;
-          }
-        } else {
-          financialStore.hobbyFund = { balance: 0, history: [] };
-        }
+        const summarySheet = workbook.Sheets['자금요약'];
+        const historySheet = workbook.Sheets['취미자금내역'];
+        
+        const summaryData = summarySheet ? XLSX.utils.sheet_to_json(summarySheet) : [];
+        const historyData = historySheet ? XLSX.utils.sheet_to_json(historySheet) : [];
+
+        // 자금 요약 시트에서 잔액을 읽어옵니다.
+        const balance = (summaryData[0] && summaryData[0]['현재 취미 자금 잔액']) || 0;
+        
+        // financialStore의 hobbyFund 상태를 완전히 복원합니다.
+        financialStore.hobbyFund = {
+          balance: balance,
+          history: historyData,
+        };
         
         alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.`);
       } catch (error) {
