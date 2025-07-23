@@ -14,6 +14,7 @@ export const useUiStore = defineStore('ui', {
     itemIdToProcess: null,
     isDetailModalVisible: false,
     itemIdForDetail: null,
+    currentBaseFileName: null, 
   }),
   
   // v3.0에서는 getter 대신 컴포넌트에서 직접 state를 참조하는 것이 더 명확할 수 있습니다.
@@ -41,6 +42,13 @@ export const useUiStore = defineStore('ui', {
     closeDetailModal() {
       this.isDetailModalVisible = false;
       this.itemIdForDetail = null;
+    },
+    /**
+     * 현재 작업 파일의 기본 이름을 설정하는 액션입니다.
+     * @param {string | null} name - 설정할 기본 파일명 또는 null
+     */
+    setCurrentBaseFileName(name) {
+      this.currentBaseFileName = name;
     },
   },
 });

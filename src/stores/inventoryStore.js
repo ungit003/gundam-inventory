@@ -178,31 +178,41 @@ export const useInventoryStore = defineStore('inventory', {
     
     exportToExcel() {
       const financialStore = useFinancialStore();
+      const uiStore = useUiStore();
+
       if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
         alert('저장할 데이터가 없습니다.'); return;
       }
       
-      // --- [핵심 수정 1] 기본 파일명 생성 ---
-      // 이제 이 파일명은 사용자에게 제안할 '기본값'으로 사용됩니다.
+      let baseFileName; // 사용자가 입력한 '기본 이름'을 저장할 변수
+
+      // --- 덮어쓰기 선택지 제공 로직 ---
+      if (uiStore.currentBaseFileName) {
+        // 현재 작업 파일명이 설정되어 있는 경우
+        if (confirm(`현재 작업 파일명 '${uiStore.currentBaseFileName}'으로 저장하시겠습니까?\n\n'취소'를 누르면 새 이름으로 저장합니다.`)) {
+          baseFileName = uiStore.currentBaseFileName;
+        } else {
+          // '취소'를 누르면, 아래의 새 이름 입력 로직으로 넘어갑니다.
+          baseFileName = null;
+        }
+      }
+
+      // --- 새 이름 입력 로직 ---
+      if (!baseFileName) {
+        const userInput = prompt("저장할 파일의 기본 이름을 입력하세요 (예: my_gundams):");
+        if (!userInput || userInput.trim() === '') {
+          alert('파일 저장이 취소되었습니다.');
+          return;
+        }
+        baseFileName = userInput.trim();
+      }
+
+      // --- 최종 파일명 생성 ---
       const now = new Date();
       const dateTimeString = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-      const defaultFileName = `${dateTimeString}_gundam_inventory.xlsx`;
 
-      // --- [핵심 수정 2] prompt를 사용하여 사용자로부터 파일명 입력받기 ---
-      const fileNameInput = prompt("저장할 엑셀 파일의 이름을 입력하세요:", defaultFileName);
-
-      // --- [핵심 수정 3] 사용자 입력값에 대한 예외 처리 ---
-      // 1. 사용자가 '취소'를 누르거나(null), 아무것도 입력하지 않고 '확인'을 누르면(빈 문자열)
-      //    저장 작업을 중단하고 함수를 종료합니다.
-      if (!fileNameInput || fileNameInput.trim() === '') {
-        alert('파일 저장이 취소되었습니다.');
-        return;
-      }
-      
-      // 2. 사용자가 입력한 파일명에 .xlsx 확장자가 없으면 자동으로 추가해줍니다.
-      const finalFileName = fileNameInput.toLowerCase().endsWith('.xlsx')
-        ? fileNameInput
-        : `${fileNameInput}.xlsx`;
+      // 최종 파일명 = 날짜시간_접두사 + 기본_이름 + .xlsx
+      const finalFileName = `${dateTimeString}_${baseFileName}.xlsx`;
 
       // --- [이후 로직은 이전과 동일] ---
       // 이제 finalFileName을 사용하여 엑셀 파일을 생성하고 저장합니다.
@@ -222,9 +232,11 @@ export const useInventoryStore = defineStore('inventory', {
         XLSX.utils.book_append_sheet(workbook, wsFundHistory, '취미자금내역');
         
         XLSX.writeFile(workbook, finalFileName);
-        
-        alert(`'${finalFileName}' 파일이 성공적으로 저장되었습니다.`);
 
+        // --- 저장 후, 현재 작업 파일명 자동 설정 ---
+        uiStore.setCurrentBaseFileName(baseFileName);
+        
+        alert(`'${finalFileName}' 파일이 성공적으로 저장되었습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
       } catch (error) {
         console.error("엑셀 저장 중 오류:", error);
         alert("엑셀 파일을 저장하는 도중 오류가 발생했습니다.");
@@ -258,8 +270,14 @@ export const useInventoryStore = defineStore('inventory', {
           balance: balance,
           history: historyData,
         };
-        
-        alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.`);
+
+        // 파일 불러오기 성공 시, 파일 이름에서 확장자를 제거하여 '기본 이름'으로 설정합니다.
+        // 예: "250723_163000_my_gundams.xlsx" -> "250723_163000_my_gundams"
+        const uiStore = useUiStore();
+        const baseFileName = file.name.replace(/\.xlsx$/i, ''); // 정규식을 사용하여 .xlsx 확장자 제거
+        uiStore.setCurrentBaseFileName(baseFileName);
+          
+        alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
       } catch (error) {
         console.error("엑셀 불러오기 중 오류:", error);
         alert("파일을 읽는 중 오류가 발생했습니다. 파일 형식이 올바른지 확인해주세요.");
