@@ -177,35 +177,52 @@ export const useInventoryStore = defineStore('inventory', {
     },
     
     exportToExcel() {
-      try {
-        const financialStore = useFinancialStore();
-        if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
-          alert('저장할 데이터가 없습니다.'); return;
+      const financialStore = useFinancialStore();
+      const uiStore = useUiStore();
+
+      if (this.inStorageList.length === 0 && this.forSaleList.length === 0 && this.soldList.length === 0) {
+        alert('저장할 데이터가 없습니다.'); return;
+      }
+      
+      let baseFileName; // 사용자가 입력한 '기본 이름'을 저장할 변수
+
+      // --- 덮어쓰기 선택지 제공 로직 ---
+      if (uiStore.currentBaseFileName) {
+        // 현재 작업 파일명이 설정되어 있는 경우
+        if (confirm(`현재 작업 파일명 '${uiStore.currentBaseFileName}'으로 저장하시겠습니까?\n\n'취소'를 누르면 새 이름으로 저장합니다.`)) {
+          baseFileName = uiStore.currentBaseFileName;
+        } else {
+          // '취소'를 누르면, 아래의 새 이름 입력 로직으로 넘어갑니다.
+          baseFileName = null;
         }
+      }
 
-        const now = new Date();
-        const dateTimeString = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-        const fileName = `${dateTimeString}_gundam_inventory.xlsx`;
+      // --- 새 이름 입력 로직 ---
+      if (!baseFileName) {
+        const userInput = prompt("저장할 파일의 기본 이름을 입력하세요 (예: my_gundams):");
+        if (!userInput || userInput.trim() === '') {
+          alert('파일 저장이 취소되었습니다.');
+          return;
+        }
+        baseFileName = userInput.trim();
+      }
 
-        const stringifyImageUrls = (list) => 
-        list.map(item => ({
-          ...item,
-          imageUrls: JSON.stringify(item.imageUrls || []), // 배열이 없으면 빈 배열로 처리
-        }));
-        
+      // --- 최종 파일명 생성 ---
+      const now = new Date();
+      const dateTimeString = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+
+      // 최종 파일명 = 날짜시간_접두사 + 기본_이름 + .xlsx
+      const finalFileName = `${dateTimeString}_${baseFileName}.xlsx`;
+
+      // --- [이후 로직은 이전과 동일] ---
+      // 이제 finalFileName을 사용하여 엑셀 파일을 생성하고 저장합니다.
+      try {
         const wsStorage = XLSX.utils.json_to_sheet(this.inStorageList);
         const wsSale = XLSX.utils.json_to_sheet(this.forSaleList);
         const wsSold = XLSX.utils.json_to_sheet(this.soldList);
-        const wsFundSummary = XLSX.utils.json_to_sheet([{
-          '현재 취미 자금 잔액': financialStore.hobbyFund.balance
-        }]);
+        
+        const wsFundSummary = XLSX.utils.json_to_sheet([{'현재 취미 자금 잔액': financialStore.hobbyFund.balance}]);
         const wsFundHistory = XLSX.utils.json_to_sheet(financialStore.hobbyFund.history);
-          
-        const fundDataToSave = {
-          ...financialStore.hobbyFund,
-          history: JSON.stringify(financialStore.hobbyFund.history, null, 2),
-        };
-        const wsFund = XLSX.utils.json_to_sheet([fundDataToSave]);
         
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, wsStorage, '보관목록');
@@ -214,16 +231,21 @@ export const useInventoryStore = defineStore('inventory', {
         XLSX.utils.book_append_sheet(workbook, wsFundSummary, '자금요약');
         XLSX.utils.book_append_sheet(workbook, wsFundHistory, '취미자금내역');
         
-        XLSX.writeFile(workbook, fileName);
-        alert(`'${fileName}' 파일이 성공적으로 저장되었습니다.`);
+        XLSX.writeFile(workbook, finalFileName);
+
+        // --- 저장 후, 현재 작업 파일명 자동 설정 ---
+        uiStore.setCurrentBaseFileName(baseFileName);
+        
+        alert(`'${finalFileName}' 파일이 성공적으로 저장되었습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
       } catch (error) {
         console.error("엑셀 저장 중 오류:", error);
-        alert("엑셀 파일을 저장하는 도중 오류가 발생했습니다. 개발자 콘솔을 확인해주세요.");
+        alert("엑셀 파일을 저장하는 도중 오류가 발생했습니다.");
       }
     },
 
     async loadFromExcel(file) {
       const financialStore = useFinancialStore();
+      const uiStore = useUiStore();
       try {
         const data = await file.arrayBuffer();
         const workbook = XLSX.read(data);
@@ -249,8 +271,17 @@ export const useInventoryStore = defineStore('inventory', {
           balance: balance,
           history: historyData,
         };
-        
-        alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.`);
+
+        // 파일명에서 날짜_시간_ 접두사를 제거하여 순수한 '기본 이름'만 추출합니다.
+        // 예: "250723_163000_my_gundams.xlsx" -> "my_gundams"
+        const fileNameWithoutExt = file.name.replace(/\.xlsx$/i, '');
+        const parts = fileNameWithoutExt.split('_');
+        // 파일명이 '날짜_시간_기본이름' 형식이면, 2번째 인덱스부터 끝까지가 기본 이름입니다.
+        // 그렇지 않으면, 그냥 확장자만 제거한 이름을 사용합니다.
+        const baseFileName = parts.length > 2 ? parts.slice(2).join('_') : fileNameWithoutExt;
+        uiStore.setCurrentBaseFileName(baseFileName);
+          
+        alert(`'${file.name}' 파일을 성공적으로 불러왔습니다.\n이제부터 이 파일이 현재 작업 파일로 설정됩니다.`);
       } catch (error) {
         console.error("엑셀 불러오기 중 오류:", error);
         alert("파일을 읽는 중 오류가 발생했습니다. 파일 형식이 올바른지 확인해주세요.");
