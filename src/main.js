@@ -1,4 +1,4 @@
-import './assets/main.css'
+import './assets/base.css'
 
 import { createApp } from 'vue'
 // 1. Pinia를 생성하는 함수를 가져옵니다.
