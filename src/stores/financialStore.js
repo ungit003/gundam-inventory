@@ -106,16 +106,21 @@ export const useFinancialStore = defineStore('financial', {
     },
 
     /**
-     * 판매로 인한 수익금을 계산하고 자금 내역에 기록하는 전문 액션입니다.
+     * 판매 시, '판매 금액 전체'를 취미 자금에 반영하는 액션입니다.
      * @param {SoldGundamItem} soldItem - 판매 완료된 아이템 객체
      */
     recordSaleProfit(soldItem) {
-      const profit = (soldItem.salePrice || 0) - (soldItem.purchasePrice || 0);
-      this.hobbyFund.balance += profit;
+      // 1. 실제 판매 금액을 가져옵니다. (값이 없으면 0으로 처리)
+      const salePrice = soldItem.salePrice || 0;
+
+      // 2. [핵심] 현재 취미 자금 잔액에 '판매 금액 전체'를 더합니다.
+      this.hobbyFund.balance += salePrice;
+
+      // 3. 취미 자금 내역에도 '판매 금액 전체'를 '입금'으로 기록합니다.
       this.hobbyFund.history.unshift({
         date: new Date().toISOString(),
-        amount: profit,
-        reason: `'${soldItem.name}' 판매 수익금`,
+        amount: salePrice, // 실제 입금된 금액을 기록
+        reason: `'${soldItem.name}' 판매 대금 입금`, // 사유를 더 명확하게 변경
       });
     },
 
