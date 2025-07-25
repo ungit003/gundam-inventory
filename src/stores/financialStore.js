@@ -43,9 +43,27 @@ export const useFinancialStore = defineStore('financial', {
       const allStock = [...inventoryStore.inStorageList, ...inventoryStore.forSaleList];
       return allStock.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
     },
+    /**
+     * 누적 판매 수익을 계산합니다.
+     * 이제 부대비용(배송비, 기타 수수료)까지 모두 차감하여 실제 순수익을 계산합니다.
+     */
     totalProfit: () => {
       const inventoryStore = useInventoryStore();
-      return inventoryStore.soldList.reduce((sum, item) => sum + ((item.salePrice || 0) - (item.purchasePrice || 0)), 0);
+      
+      // soldList의 각 아이템에 대해 reduce 연산을 수행합니다.
+      return inventoryStore.soldList.reduce((sum, item) => {
+        // 1. 각 비용 항목에 대해, 값이 없거나 null일 경우 0으로 처리하여 계산 오류를 방지합니다.
+        const salePrice = item.salePrice || 0;
+        const purchasePrice = item.purchasePrice || 0;
+        const shippingCost = item.shippingCost || 0;
+        const otherFees = item.otherFees || 0;
+        
+        // 2. 한 아이템의 실제 순수익을 계산합니다.
+        const itemProfit = salePrice - purchasePrice - shippingCost - otherFees;
+        
+        // 3. 계산된 순수익을 누적 합계(sum)에 더합니다.
+        return sum + itemProfit;
+      }, 0); // 초기 누적 합계는 0으로 시작합니다.
     },
     estimatedTotalSaleValue: () => {
       const inventoryStore = useInventoryStore();
@@ -88,16 +106,21 @@ export const useFinancialStore = defineStore('financial', {
     },
 
     /**
-     * 판매로 인한 수익금을 계산하고 자금 내역에 기록하는 전문 액션입니다.
+     * 판매 시, '판매 금액 전체'를 취미 자금에 반영하는 액션입니다.
      * @param {SoldGundamItem} soldItem - 판매 완료된 아이템 객체
      */
     recordSaleProfit(soldItem) {
-      const profit = (soldItem.salePrice || 0) - (soldItem.purchasePrice || 0);
-      this.hobbyFund.balance += profit;
+      // 1. 실제 판매 금액을 가져옵니다. (값이 없으면 0으로 처리)
+      const salePrice = soldItem.salePrice || 0;
+
+      // 2. [핵심] 현재 취미 자금 잔액에 '판매 금액 전체'를 더합니다.
+      this.hobbyFund.balance += salePrice;
+
+      // 3. 취미 자금 내역에도 '판매 금액 전체'를 '입금'으로 기록합니다.
       this.hobbyFund.history.unshift({
         date: new Date().toISOString(),
-        amount: profit,
-        reason: `'${soldItem.name}' 판매 수익금`,
+        amount: salePrice, // 실제 입금된 금액을 기록
+        reason: `'${soldItem.name}' 판매 대금 입금`, // 사유를 더 명확하게 변경
       });
     },
 
