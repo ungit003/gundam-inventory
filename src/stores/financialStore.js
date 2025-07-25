@@ -43,9 +43,27 @@ export const useFinancialStore = defineStore('financial', {
       const allStock = [...inventoryStore.inStorageList, ...inventoryStore.forSaleList];
       return allStock.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
     },
+    /**
+     * 누적 판매 수익을 계산합니다.
+     * 이제 부대비용(배송비, 기타 수수료)까지 모두 차감하여 실제 순수익을 계산합니다.
+     */
     totalProfit: () => {
       const inventoryStore = useInventoryStore();
-      return inventoryStore.soldList.reduce((sum, item) => sum + ((item.salePrice || 0) - (item.purchasePrice || 0)), 0);
+      
+      // soldList의 각 아이템에 대해 reduce 연산을 수행합니다.
+      return inventoryStore.soldList.reduce((sum, item) => {
+        // 1. 각 비용 항목에 대해, 값이 없거나 null일 경우 0으로 처리하여 계산 오류를 방지합니다.
+        const salePrice = item.salePrice || 0;
+        const purchasePrice = item.purchasePrice || 0;
+        const shippingCost = item.shippingCost || 0;
+        const otherFees = item.otherFees || 0;
+        
+        // 2. 한 아이템의 실제 순수익을 계산합니다.
+        const itemProfit = salePrice - purchasePrice - shippingCost - otherFees;
+        
+        // 3. 계산된 순수익을 누적 합계(sum)에 더합니다.
+        return sum + itemProfit;
+      }, 0); // 초기 누적 합계는 0으로 시작합니다.
     },
     estimatedTotalSaleValue: () => {
       const inventoryStore = useInventoryStore();
